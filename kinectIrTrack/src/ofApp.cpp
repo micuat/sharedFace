@@ -5,8 +5,6 @@
  */
 
 #include "ofApp.h"
-#include "libfreenect_registration.h"
-#include "freenect_internal.h"
 
 using namespace ofxActiveScan;
 
@@ -100,54 +98,8 @@ void ofApp::update() {
 			ofxCv::erode(kinect.getDepthPixelsRef(), eroded, 3);
 			contourFinder.findContours(eroded);
 		} else {
-			ofImage irShifted;
-			irShifted.allocate(640, 480, OF_IMAGE_GRAYSCALE);
-			for( int y = 0; y < 480; y++ ) {
-				for( int x = 0; x < 640; x++ ) {
-					irShifted.setColor(x, y, 0);
-				}
-			}
-#define REG_X_VAL_SCALE 256 // "fixed-point" precision for double -> int32_t conversion
-			
-#define S2D_PIXEL_CONST 10
-#define S2D_CONST_OFFSET 0.375
-			
-#define DEPTH_SENSOR_X_RES 1280
-#define DEPTH_MIRROR_X 0
-			
-#define DEPTH_MAX_METRIC_VALUE FREENECT_DEPTH_MM_MAX_VALUE
-#define DEPTH_NO_MM_VALUE      FREENECT_DEPTH_MM_NO_VALUE
-#define DEPTH_MAX_RAW_VALUE    FREENECT_DEPTH_RAW_MAX_VALUE
-#define DEPTH_NO_RAW_VALUE     FREENECT_DEPTH_RAW_NO_VALUE
-			
-#define DEPTH_X_OFFSET 1
-#define DEPTH_Y_OFFSET 1
-#define DEPTH_X_RES 640
-#define DEPTH_Y_RES 480
-			freenect_registration* reg = &(kinect.getDevice()->registration);
-			uint32_t target_offset = DEPTH_Y_RES * reg->reg_pad_info.start_lines;
-			for( int y = 0; y < 480; y++ ) {
-				for( int x = 0; x < 640; x++ ) {
-					uint16_t metric_depth = kinect.getDistanceAt(x, y);//kinect.getPixels()[x + y * DEPTH_X_RES];
-					uint32_t reg_index = DEPTH_MIRROR_X ? ((y + 1) * DEPTH_X_RES - x - 1) : (y * DEPTH_X_RES + x);
-					uint32_t nx = (reg->registration_table[reg_index][0] + reg->depth_to_rgb_shift[metric_depth]) / REG_X_VAL_SCALE;
-					uint32_t ny =  reg->registration_table[reg_index][1];
-					
-					// ignore anything outside the image bounds
-					if (nx >= DEPTH_X_RES) continue;
-					
-					// convert nx, ny to an index in the depth image array
-					uint32_t target_index = (DEPTH_MIRROR_X ? ((ny + 1) * DEPTH_X_RES - nx - 1) : (ny * DEPTH_X_RES + nx)) - target_offset;
-					
-					// get the current value at the new location
-					uint16_t current_depth = kinect.getRawDepthPixels()[target_index];
-					
-					irShifted.getPixels()[target_index] = kinect.getPixels()[x + y * DEPTH_X_RES];
-				}
-			}
-			irShifted.update();
 			ofImage blurred;
-			ofxCv::blur(irShifted, blurred, 3);
+			ofxCv::blur(kinect.getPixelsRef(), blurred, 3);
 			contourFinder.findContours(blurred);
 		}
 	}
@@ -194,6 +146,8 @@ void ofApp::draw() {
 			
 			ofDisableBlendMode();
 			ofEnableDepthTest();
+			
+			kinect.draw(image.getWidth(), 0);
 		}
 		
 		drawPointCloud();
