@@ -86,6 +86,51 @@ void ofApp::init() {
 	
 	drawImage.allocate(kinect.width, kinect.height);
 	
+	// Kalman filter
+	// http://campar.in.tum.de/Chair/KalmanFilter
+	KF.init(12, 6, 0);
+	
+	KF.transitionMatrix = *(cv::Mat_<float>(12, 12) <<
+//							1,0,0,1,0,0,0,0,0,0,0,0,
+//							0,1,0,0,1,0,0,0,0,0,0,0,
+//							0,0,1,0,0,1,0,0,0,0,0,0,
+//							0,0,0,1,0,0,0,0,0,0,0,0,
+//							0,0,0,0,1,0,0,0,0,0,0,0,
+//							0,0,0,0,0,1,0,0,0,0,0,0,
+//							0,0,0,0,0,0,1,0,0,1,0,0,
+//							0,0,0,0,0,0,0,1,0,0,1,0,
+//							0,0,0,0,0,0,0,0,1,0,0,1,
+//							0,0,0,0,0,0,0,0,0,1,0,0,
+//							0,0,0,0,0,0,0,0,0,0,1,0,
+//							0,0,0,0,0,0,0,0,0,0,0,1
+							1,0,0,0,0,0,1,0,0,0,0,0,
+							0,1,0,0,0,0,0,1,0,0,0,0,
+							0,0,1,0,0,0,0,0,1,0,0,0,
+							0,0,0,0,0,0,1,0,0,0,0,0,
+							0,0,0,0,0,0,0,1,0,0,0,0,
+							0,0,0,0,0,0,0,0,1,0,0,0,
+							0,0,0,1,0,0,0,0,0,1,0,0,
+							0,0,0,0,1,0,0,0,0,0,1,0,
+							0,0,0,0,0,1,0,0,0,0,0,1,
+							0,0,0,0,0,0,0,0,0,1,0,0,
+							0,0,0,0,0,0,0,0,0,0,1,0,
+							0,0,0,0,0,0,0,0,0,0,0,1
+							);
+	
+	measurement = cv::Mat_<float>::zeros(6,1);
+	
+	KF.statePre.at<float>(0) = 0;
+	KF.statePre.at<float>(1) = 0;
+	KF.statePre.at<float>(2) = 0;
+	KF.statePre.at<float>(3) = 0;
+	KF.statePre.at<float>(4) = 0;
+	KF.statePre.at<float>(5) = 0;
+	
+	setIdentity(KF.measurementMatrix);
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-4));
+	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
+	setIdentity(KF.errorCovPost, cv::Scalar::all(.1));
+	
 	ofEnableDepthTest();
 }
 
@@ -248,7 +293,29 @@ void ofApp::drawPointCloud() {
 		cv::SVD svd(H);
 		cv::Mat R = svd.vt.t() * svd.u.t();
 		cv::Mat T = -R * centroid0 + centroidC;
-		modelMat.set(R.at<float>(0, 0), R.at<float>(0, 1), R.at<float>(0, 2), T.at<float>(0), R.at<float>(1, 0), R.at<float>(1, 1), R.at<float>(1, 2), T.at<float>(1), R.at<float>(2, 0), R.at<float>(2, 1), R.at<float>(2, 2), T.at<float>(2), 0, 0, 0, 1);
+		modelMat.set(R.at<float>(0, 0), R.at<float>(0, 1), R.at<float>(0, 2), T.at<float>(0),
+					 R.at<float>(1, 0), R.at<float>(1, 1), R.at<float>(1, 2), T.at<float>(1),
+					 R.at<float>(2, 0), R.at<float>(2, 1), R.at<float>(2, 2), T.at<float>(2),
+					 0, 0, 0, 1);
+		
+		ofVec3f euler;
+		euler = modelMat.getRotate().getEuler();
+		measurement(0) = T.at<float>(0);
+		measurement(1) = T.at<float>(1);
+		measurement(2) = T.at<float>(2);
+		measurement(3) = euler.x;
+		measurement(4) = euler.y;
+		measurement(5) = euler.z;
+		
+		// The "correct" phase that is going to use the predicted value and our measurement
+		cv::Mat estimated = KF.correct(measurement);
+		euler.x = estimated.at<float>(3);
+		euler.y = estimated.at<float>(4);
+		euler.z = estimated.at<float>(5);
+		ofQuaternion q;
+		q.set
+		//cv::Point statePt(estimated.at<float>(0),estimated.at<float>(1));
+		
 	}
 	
 	if( initMesh.getNumVertices() == 0 || bReset ) {

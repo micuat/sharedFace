@@ -51,5 +51,8 @@ private:
 	vector<ofVec4f> lines;
 	ofFbo drawImage;
 	
+	cv::KalmanFilter KF;
+	cv::Mat_<float> measurement;
+	
 	bool pathLoaded;
 };
