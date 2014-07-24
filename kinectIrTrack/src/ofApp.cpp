@@ -80,7 +80,7 @@ void ofApp::init() {
 	contourFinder.setTargetColor(0);
 	contourFinder.setThreshold(128);
 	// wait for half a frame before forgetting something
-	contourFinder.getTracker().setPersistence(15);
+	contourFinder.getTracker().setPersistence(60);
 	// an object can move up to 32 pixels per frame
 	contourFinder.getTracker().setMaximumDistance(32);
 	
@@ -121,7 +121,7 @@ void ofApp::init() {
 	KF.statePre.at<float>(11) = 0;
 	
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-4));
 	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
 	setIdentity(KF.errorCovPost, cv::Scalar::all(.1));
 	
@@ -145,19 +145,33 @@ void ofApp::update() {
 		updatePointCloud(mesh);
 		
 		ofMesh markers, markersProjected;
+		vector<int> markerLabels;
 		ofxCv::RectTracker& tracker = contourFinder.getTracker();
 		for(int i = 0; i < contourFinder.size(); i++) {
 			ofRectangle rect = ofxCv::toOf(contourFinder.getBoundingRect(i));
 			ofVec3f marker;
-			if( findVec3fFromRect(rect, marker) ) {
+			if( findVec3fFromRect(rect, marker) ) { // skip if not enough neighbors
 				markers.addVertex(marker);
 				markersProjected.addVertex(ofxCv::toOf(contourFinder.getCenter(i)));
+				markerLabels.push_back(contourFinder.getLabel(i));
 			}
 		}
 		
 		if( markers.getNumVertices() > 0 ) {
-			
-			target = registerMarkers(markers, markersProjected);
+			bool bNeedReregister = false;
+			const vector<unsigned int>& deadLabels = tracker.getDeadLabels();
+			for( int i = 0; i < registeredLabels.size(); i++ ) {
+				for( int j = 0; j < deadLabels.size(); j++ ) {
+					if( registeredLabels.at(i) == deadLabels.at(j) ) {
+						bNeedReregister = true;
+					}
+				}
+			}
+			if( registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
+				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
+			} else { // rely on tracker
+				updateTargetUsingLabels(markers, markerLabels, registeredLabels, target);
+			}
 			
 			if( initTarget.getNumVertices() == 0 || bReset ) {
 				initTarget = target;
@@ -165,11 +179,11 @@ void ofApp::update() {
 			
 			modelMat = findRigidTransformation(target, initTarget);
 			updateKalmanFilter();
-		}
-		
-		if( initMesh.getNumVertices() == 0 || bReset ) {
-			updateInitMesh();
-			bReset = false;
+			
+			if( initMesh.getNumVertices() == 0 || bReset ) {
+				updateInitMesh();
+				bReset = false;
+			}
 		}
 	}
 }
@@ -212,8 +226,10 @@ bool ofApp::findVec3fFromRect(ofRectangle& rect, ofVec3f& v) {
 	return true;
 }
 
-ofMesh ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected) {
-	ofMesh markersRegistered;
+vector<int> ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected, vector<int>& markerLabels, ofMesh& markersRegistered) {
+	vector<int> labels;
+	labels.resize(3, markerLabels.at(0));
+	
 	ofVec3f trMarker = markers.getVertex(0);
 	ofVec3f blMarker = markers.getVertex(0);
 	ofVec3f brMarker = markers.getVertex(0);
@@ -222,21 +238,44 @@ ofMesh ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected) {
 	float brDist = markersProjected.getVertex(0).distance(ofVec2f(kinect.width, kinect.height));
 	for( int i = 1; i < markers.getNumVertices(); i++ ) {
 		ofVec2f p = markersProjected.getVertex(i);
-		if( p.distance(ofVec2f(kinect.width, 0)) < trDist ) trMarker = markers.getVertex(i);
-		if( p.distance(ofVec2f(0, kinect.height)) < blDist ) blMarker = markers.getVertex(i);
-		if( p.distance(ofVec2f(kinect.width, kinect.height)) < brDist ) brMarker = markers.getVertex(i);
+		
+		float curtrDist = p.distance(ofVec2f(kinect.width, 0));
+		float curblDist = p.distance(ofVec2f(0, kinect.height));
+		float curbrDist = p.distance(ofVec2f(kinect.width, kinect.height));
+		if( curtrDist < trDist ) {
+			trDist = curtrDist;
+			trMarker = markers.getVertex(i);
+			labels.at(0) = markerLabels.at(i);
+		}
+		if( curblDist < blDist ) {
+			blDist = curblDist;
+			blMarker = markers.getVertex(i);
+			labels.at(1) = markerLabels.at(i);
+		}
+		if( curbrDist < brDist ) {
+			brDist = curbrDist;
+			brMarker = markers.getVertex(i);
+			labels.at(2) = markerLabels.at(i);
+		}
 	}
 	
 	markersRegistered.clear();
-	markersRegistered.setMode(OF_PRIMITIVE_TRIANGLES);
 	markersRegistered.addVertex(trMarker);
 	markersRegistered.addVertex(blMarker);
 	markersRegistered.addVertex(brMarker);
-	markersRegistered.addTriangle(0, 1, 2);
-	markersRegistered.addTexCoord(ofVec2f(500, 0));
-	markersRegistered.addTexCoord(ofVec2f(0, 500));
-	markersRegistered.addTexCoord(ofVec2f(500, 500));
-	return markersRegistered;
+	return labels;
+}
+
+void ofApp::updateTargetUsingLabels(ofMesh& markers, vector<int>& curLabels, vector<int>& targetLabels, ofMesh& target) {
+	target.clear();
+	for( int i = 0; i < targetLabels.size(); i++ ) {
+		for( int j = 0; j < curLabels.size(); j++ ) {
+			if( targetLabels.at(i) == curLabels.at(j) ) {
+				target.addVertex(markers.getVertex(j));
+				break;
+			}
+		}
+	}
 }
 
 ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {

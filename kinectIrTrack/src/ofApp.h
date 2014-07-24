@@ -20,7 +20,8 @@ public:
 	void draw();
 	void updatePointCloud(ofMesh&);
 	bool findVec3fFromRect(ofRectangle&, ofVec3f&);
-	ofMesh registerMarkers(ofMesh&, ofMesh&);
+	vector<int> registerMarkers(ofMesh&, ofMesh&, vector<int>&, ofMesh&);
+	void updateTargetUsingLabels(ofMesh&, vector<int>&, vector<int>&, ofMesh&);
 	ofMatrix4x4 findRigidTransformation(ofMesh&, ofMesh&);
 	void updateKalmanFilter();
 	void updateInitMesh();
@@ -51,6 +52,7 @@ private:
 	ofMesh initMesh;
 	ofImage image;
 	ofMatrix4x4 modelMat;
+	vector<int> registeredLabels;
 	
 	bool bReset;
 	vector<ofVec4f> lines;
