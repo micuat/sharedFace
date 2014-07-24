@@ -18,7 +18,11 @@ public:
 	void init();
 	void update();
 	void draw();
-	void drawPointCloud();
+	void updatePointCloud();
+	ofMesh registerMarkers(ofMesh, ofMesh);
+	ofMatrix4x4 findRigidTransformation(ofMesh, ofMesh);
+	void updateKalmanFilter();
+	void updateInitMesh();
 	void keyPressed(int);
 	void mousePressed(int x, int y, int button);
 	void mouseDragged(int x, int y, int button);
