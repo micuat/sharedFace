@@ -142,29 +142,17 @@ void ofApp::update() {
 			contourFinder.findContours(blurred);
 		}
 		
-		updatePointCloud();
+		updatePointCloud(mesh);
 		
 		ofMesh markers, markersProjected;
 		ofxCv::RectTracker& tracker = contourFinder.getTracker();
 		for(int i = 0; i < contourFinder.size(); i++) {
 			ofRectangle rect = ofxCv::toOf(contourFinder.getBoundingRect(i));
-			float centerDistance = kinect.getDistanceAt(rect.getTopLeft()) +
-			kinect.getDistanceAt(rect.getTopRight()) +
-			kinect.getDistanceAt(rect.getBottomLeft()) +
-			kinect.getDistanceAt(rect.getBottomRight());
-			int count = 4;
-			if( kinect.getDistanceAt(rect.getTopLeft()) <= 0.f ) count--;
-			if( kinect.getDistanceAt(rect.getTopRight()) <= 0.f ) count--;
-			if( kinect.getDistanceAt(rect.getBottomLeft()) <= 0.f ) count--;
-			if( kinect.getDistanceAt(rect.getBottomRight()) <= 0.f ) count--;
-			if( count < 2 ) continue;
-			centerDistance /= count;
-			float threshold = 1.f;
-			
-			ofVec3f marker(kinect.getWorldCoordinateAt(rect.getCenter().x, rect.getCenter().y, centerDistance));
-			markers.addVertex(marker);
-			markers.addColor(ofColor::violet);
-			markersProjected.addVertex(ofxCv::toOf(contourFinder.getCenter(i)));
+			ofVec3f marker;
+			if( findVec3fFromRect(rect, marker) ) {
+				markers.addVertex(marker);
+				markersProjected.addVertex(ofxCv::toOf(contourFinder.getCenter(i)));
+			}
 		}
 		
 		if( markers.getNumVertices() > 0 ) {
@@ -186,26 +174,46 @@ void ofApp::update() {
 	}
 }
 
-void ofApp::updatePointCloud() {
+void ofApp::updatePointCloud(ofMesh& m) {
 	int w = 640;
 	int h = 480;
-	mesh.clear();
-	mesh.setMode(OF_PRIMITIVE_POINTS);
+	m.clear();
+	m.setMode(OF_PRIMITIVE_POINTS);
 	glPointSize(2);
 	int step = 2;
 	
 	for(int y = 0; y < h; y += step) {
 		for(int x = 0; x < w; x += step) {
 			if(kinect.getDistanceAt(x, y) > 0 ) {
-				mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-				mesh.addTexCoord(ofVec2f(x, y));
+				m.addVertex(kinect.getWorldCoordinateAt(x, y));
+				m.addTexCoord(ofVec2f(x, y));
 			}
 		}
 	}
 }
 
-ofMesh ofApp::registerMarkers(ofMesh markers, ofMesh markersProjected) {
-	ofMesh target;
+bool ofApp::findVec3fFromRect(ofRectangle& rect, ofVec3f& v) {
+	float centerDistance = kinect.getDistanceAt(rect.getTopLeft()) +
+	kinect.getDistanceAt(rect.getTopRight()) +
+	kinect.getDistanceAt(rect.getBottomLeft()) +
+	kinect.getDistanceAt(rect.getBottomRight());
+	int count = 4;
+	if( kinect.getDistanceAt(rect.getTopLeft()) <= 0.f ) count--;
+	if( kinect.getDistanceAt(rect.getTopRight()) <= 0.f ) count--;
+	if( kinect.getDistanceAt(rect.getBottomLeft()) <= 0.f ) count--;
+	if( kinect.getDistanceAt(rect.getBottomRight()) <= 0.f ) count--;
+	
+	if( count < 2 ) return false;
+	
+	centerDistance /= count;
+	float threshold = 1.f;
+	
+	v = ofVec3f(kinect.getWorldCoordinateAt(rect.getCenter().x, rect.getCenter().y, centerDistance));
+	return true;
+}
+
+ofMesh ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected) {
+	ofMesh markersRegistered;
 	ofVec3f trMarker = markers.getVertex(0);
 	ofVec3f blMarker = markers.getVertex(0);
 	ofVec3f brMarker = markers.getVertex(0);
@@ -219,19 +227,19 @@ ofMesh ofApp::registerMarkers(ofMesh markers, ofMesh markersProjected) {
 		if( p.distance(ofVec2f(kinect.width, kinect.height)) < brDist ) brMarker = markers.getVertex(i);
 	}
 	
-	target.clear();
-	target.setMode(OF_PRIMITIVE_TRIANGLES);
-	target.addVertex(trMarker);
-	target.addVertex(blMarker);
-	target.addVertex(brMarker);
-	target.addTriangle(0, 1, 2);
-	target.addTexCoord(ofVec2f(500, 0));
-	target.addTexCoord(ofVec2f(0, 500));
-	target.addTexCoord(ofVec2f(500, 500));
-	return target;
+	markersRegistered.clear();
+	markersRegistered.setMode(OF_PRIMITIVE_TRIANGLES);
+	markersRegistered.addVertex(trMarker);
+	markersRegistered.addVertex(blMarker);
+	markersRegistered.addVertex(brMarker);
+	markersRegistered.addTriangle(0, 1, 2);
+	markersRegistered.addTexCoord(ofVec2f(500, 0));
+	markersRegistered.addTexCoord(ofVec2f(0, 500));
+	markersRegistered.addTexCoord(ofVec2f(500, 500));
+	return markersRegistered;
 }
 
-ofMatrix4x4 ofApp::findRigidTransformation(ofMesh target, ofMesh initTarget) {
+ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	ofMatrix4x4 mat;
 	
 	// find rigid transformation

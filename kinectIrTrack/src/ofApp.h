@@ -18,9 +18,10 @@ public:
 	void init();
 	void update();
 	void draw();
-	void updatePointCloud();
-	ofMesh registerMarkers(ofMesh, ofMesh);
-	ofMatrix4x4 findRigidTransformation(ofMesh, ofMesh);
+	void updatePointCloud(ofMesh&);
+	bool findVec3fFromRect(ofRectangle&, ofVec3f&);
+	ofMesh registerMarkers(ofMesh&, ofMesh&);
+	ofMatrix4x4 findRigidTransformation(ofMesh&, ofMesh&);
 	void updateKalmanFilter();
 	void updateInitMesh();
 	void keyPressed(int);
