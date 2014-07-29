@@ -167,7 +167,7 @@ void ofApp::update() {
 					}
 				}
 			}
-			if( registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
+			if( 1 || registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
 				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
 			} else { // rely on tracker
 				updateTargetUsingLabels(markers, markerLabels, registeredLabels, target);
@@ -299,10 +299,10 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	cv::SVD svd(H);
 	cv::Mat R = svd.vt.t() * svd.u.t();
 	cv::Mat T = -R * centroid0 + centroidC;
-	mat.set(R.at<float>(0, 0), R.at<float>(0, 1), R.at<float>(0, 2), T.at<float>(0),
-				 R.at<float>(1, 0), R.at<float>(1, 1), R.at<float>(1, 2), T.at<float>(1),
-				 R.at<float>(2, 0), R.at<float>(2, 1), R.at<float>(2, 2), T.at<float>(2),
-				 0, 0, 0, 1);
+	mat.set(R.at<float>(0, 0), R.at<float>(1, 0), R.at<float>(2, 0), 0,
+				 R.at<float>(0, 1), R.at<float>(1, 1), R.at<float>(2, 1), 0,
+				 R.at<float>(0, 2), R.at<float>(1, 2), R.at<float>(2, 2), 0,
+				 T.at<float>(0), T.at<float>(1), T.at<float>(2), 1);
 	return mat;
 }
 
@@ -312,20 +312,26 @@ void ofApp::updateKalmanFilter() {
 	measurement(0) = modelMat.getTranslation().x;
 	measurement(1) = modelMat.getTranslation().y;
 	measurement(2) = modelMat.getTranslation().z;
-	measurement(3) = euler.x;
-	measurement(4) = euler.y;
-	measurement(5) = euler.z;
+	// http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+	measurement(3) = euler.x; // bank
+	measurement(4) = euler.y; // heading
+	measurement(5) = euler.z; // attitude
 	
 	KF.predict();
 	// The "correct" phase that is going to use the predicted value and our measurement
 	cv::Mat estimated = KF.correct(measurement);
+	ofLogVerbose() << modelMat;
 	ofLogVerbose() << measurement;
 	ofLogVerbose() << estimated;
-	//modelMat.makeIdentityMatrix();
-	//modelMat.rotate(estimated.at<float>(3), 0, 1, 0);
-	//modelMat.rotate(estimated.at<float>(4), 1, 0, 0);
+	modelMat.makeIdentityMatrix();
+	//modelMat.rotate(estimated.at<float>(4), 0, 1, 0);
 	//modelMat.rotate(estimated.at<float>(5), 0, 0, 1);
+	//modelMat.rotate(estimated.at<float>(3), 1, 0, 0);
+	modelMat.rotate(measurement.at<float>(4), 0, 1, 0);
+	modelMat.rotate(measurement.at<float>(5), 0, 0, 1);
+	modelMat.rotate(measurement.at<float>(3), 1, 0, 0);
 	//modelMat.translate(estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2));
+	modelMat.translate(measurement.at<float>(0), measurement.at<float>(1), measurement.at<float>(2));
 }
 
 void ofApp::updateInitMesh() {
@@ -383,17 +389,19 @@ void ofApp::draw() {
 			drawImage.draw(0, 0);
 			image.draw(0, 0);
 			
+			image.draw(image.getWidth(), 0);
+			kinect.draw(image.getWidth(), 0);
+			
 			ofDisableBlendMode();
 			ofEnableDepthTest();
-			
-			kinect.draw(image.getWidth(), 0);
 		}
 		
 		ofSetColor(255);
 		if( cameraMode == EASYCAM_MODE )
 			mesh.draw();
 		glPointSize(3);
-		glMultMatrixf((GLfloat*)ofMatrix4x4::getTransposedOf(modelMat).getPtr());
+		target.draw();
+		glMultMatrixf((GLfloat*)modelMat.getPtr());
 		drawImage.getTextureReference().bind();
 		initMesh.draw();
 		drawImage.getTextureReference().unbind();
