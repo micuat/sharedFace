@@ -87,8 +87,8 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	ukfPoint.init(0.1, 0.1);
-	ukfEuler.init(0.1, 0.1);
+	ukfPoint.init(0.01, 0.1);
+	ukfEuler.init(0.01, 0.1);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxUkfPoint3d ukf;
 		ukf.init(0.01, 0.1);
@@ -266,6 +266,8 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	ofVec3f cC = target.getCentroid();
 	cv::Mat centroid0 = (cv::Mat1f(3, 1) << c0.x, c0.y, c0.z);
 	cv::Mat centroidC = (cv::Mat1f(3, 1) << cC.x, cC.y, cC.z);
+	
+	
 	cv::Mat H = cv::Mat_<float>::zeros(3, 3);
 	for( int i = 0; i < n; i++ ) {
 		cv::Mat p0 = (cv::Mat1f(3, 1) << initTarget.getVertex(i).x, initTarget.getVertex(i).y, initTarget.getVertex(i).z);
@@ -274,6 +276,13 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 		pC = pC - centroidC;
 		H = H + p0 * pC.t();
 	}
+	
+	ukfPoint.update(cC);
+	cC = ukfPoint.getEstimation();
+	ofVec3f v = ukfPoint.getVelocity();
+	float dt = 4.f;
+	centroidC = (cv::Mat1f(3, 1) << cC.x + v.x * dt, cC.y + v.y * dt, cC.z + v.z * dt);
+	
 	cv::SVD svd(H);
 	cv::Mat R = svd.vt.t() * svd.u.t();
 	cv::Mat T = -R * centroid0 + centroidC;
@@ -285,12 +294,8 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 }
 
 void ofApp::updateModelKalmanFilter() {
-	ukfPoint.update(modelMat.getTranslation());
-	ukfEuler.update(modelMat.getRotate());
-//	ofLogWarning() << "measure " << modelMat.getTranslation();
-//	ofLogWarning() << "predict " << ukfPoint.getEstimation();
-	ofLogWarning() << "measure " << modelMat.getRotate().getEuler();
-	ofLogWarning() << "predict " << ukfEuler.getEstimation().getEuler();
+//	ukfPoint.update(modelMat.getTranslation());
+//	ukfEuler.update(modelMat.getRotate());
 //	modelMat.makeIdentityMatrix();
 //	modelMat.translate(ukfPoint.getEstimation());
 //	modelMat.rotate(ukfEuler.getEstimation());
