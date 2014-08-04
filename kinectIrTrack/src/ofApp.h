@@ -11,6 +11,10 @@
 #include "ofxCv.h"
 #include "ofxActiveScan.h"
 #include "ofxKinect.h"
+#include "ofxUkfPoint.h"
+#include "ofxUkfEuler.h"
+
+#define NUM_MARKERS 3
 
 class ofApp : public ofBaseApp {
 public:
@@ -22,8 +26,9 @@ public:
 	bool findVec3fFromRect(ofRectangle&, ofVec3f&);
 	vector<int> registerMarkers(ofMesh&, ofMesh&, vector<int>&, ofMesh&);
 	void updateTargetUsingLabels(ofMesh&, vector<int>&, vector<int>&, ofMesh&);
+	void updateMarkerKalmanFilter();
 	ofMatrix4x4 findRigidTransformation(ofMesh&, ofMesh&);
-	void updateKalmanFilter();
+	void updateModelKalmanFilter();
 	void updateInitMesh();
 	void keyPressed(int);
 	void mousePressed(int x, int y, int button);
@@ -58,8 +63,9 @@ private:
 	vector<ofVec4f> lines;
 	ofFbo drawImage;
 	
-	cv::KalmanFilter KF;
-	cv::Mat_<float> measurement;
+	ofxUkfPoint3d ukfPoint;
+	ofxUkfEuler ukfEuler;
+	vector<ofxUkfPoint3d> ukfMarkers;
 	
 	bool pathLoaded;
 };

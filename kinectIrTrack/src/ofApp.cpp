@@ -37,7 +37,7 @@ void ofApp::setup() {
 }
 
 void ofApp::init() {
-	ofSetLogLevel(OF_LOG_VERBOSE);
+	ofSetLogLevel(OF_LOG_WARNING);
 	
 	// enable depth->video image calibration
 	kinect.setRegistration(true);
@@ -87,43 +87,13 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	// http://campar.in.tum.de/Chair/KalmanFilter
-	KF.init(12, 6, 0);
-	
-	KF.transitionMatrix = *(cv::Mat_<float>(12, 12) <<
-							1,0,0,0,0,0,1,0,0,0,0,0,
-							0,1,0,0,0,0,0,1,0,0,0,0,
-							0,0,1,0,0,0,0,0,1,0,0,0,
-							0,0,0,1,0,0,0,0,0,1,0,0,
-							0,0,0,0,1,0,0,0,0,0,1,0,
-							0,0,0,0,0,1,0,0,0,0,0,1,
-							0,0,0,0,0,0,1,0,0,0,0,0,
-							0,0,0,0,0,0,0,1,0,0,0,0,
-							0,0,0,0,0,0,0,0,1,0,0,0,
-							0,0,0,0,0,0,0,0,0,1,0,0,
-							0,0,0,0,0,0,0,0,0,0,1,0,
-							0,0,0,0,0,0,0,0,0,0,0,1
-							);
-	
-	measurement = cv::Mat_<float>::zeros(6,1);
-	
-	KF.statePre.at<float>(0) = 0;
-	KF.statePre.at<float>(1) = 0;
-	KF.statePre.at<float>(2) = 0;
-	KF.statePre.at<float>(3) = 0;
-	KF.statePre.at<float>(4) = 0;
-	KF.statePre.at<float>(5) = 0;
-	KF.statePre.at<float>(6) = 0;
-	KF.statePre.at<float>(7) = 0;
-	KF.statePre.at<float>(8) = 0;
-	KF.statePre.at<float>(9) = 0;
-	KF.statePre.at<float>(10) = 0;
-	KF.statePre.at<float>(11) = 0;
-	
-	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-4));
-	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
-	setIdentity(KF.errorCovPost, cv::Scalar::all(.1));
+	ukfPoint.init(0.1, 0.1);
+	ukfEuler.init(0.1, 0.1);
+	for( int i = 0; i < NUM_MARKERS; i++ ) {
+		ofxUkfPoint3d ukf;
+		ukf.init(0.01, 0.1);
+		ukfMarkers.push_back(ukf);
+	}
 	
 	ofEnableDepthTest();
 }
@@ -177,8 +147,9 @@ void ofApp::update() {
 				initTarget = target;
 			}
 			
+			updateMarkerKalmanFilter();
 			modelMat = findRigidTransformation(target, initTarget);
-			updateKalmanFilter();
+			updateModelKalmanFilter();
 			
 			if( initMesh.getNumVertices() == 0 || bReset ) {
 				updateInitMesh();
@@ -278,6 +249,13 @@ void ofApp::updateTargetUsingLabels(ofMesh& markers, vector<int>& curLabels, vec
 	}
 }
 
+void ofApp::updateMarkerKalmanFilter() {
+	for( int i = 0; i < target.getNumVertices(); i++ ) {
+		ukfMarkers.at(i).update(target.getVertex(i));
+		target.setVertex(i, ukfMarkers.at(i).getEstimation());
+	}
+}
+
 ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	ofMatrix4x4 mat;
 	
@@ -306,32 +284,16 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	return mat;
 }
 
-void ofApp::updateKalmanFilter() {
-	ofVec3f euler;
-	euler = modelMat.getRotate().getEuler();
-	measurement(0) = modelMat.getTranslation().x;
-	measurement(1) = modelMat.getTranslation().y;
-	measurement(2) = modelMat.getTranslation().z;
-	// http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-	measurement(3) = euler.x; // bank
-	measurement(4) = euler.y; // heading
-	measurement(5) = euler.z; // attitude
-	
-	KF.predict();
-	// The "correct" phase that is going to use the predicted value and our measurement
-	cv::Mat estimated = KF.correct(measurement);
-	ofLogVerbose() << modelMat;
-	ofLogVerbose() << measurement;
-	ofLogVerbose() << estimated;
-	modelMat.makeIdentityMatrix();
-	//modelMat.rotate(estimated.at<float>(4), 0, 1, 0);
-	//modelMat.rotate(estimated.at<float>(5), 0, 0, 1);
-	//modelMat.rotate(estimated.at<float>(3), 1, 0, 0);
-	modelMat.rotate(measurement.at<float>(4), 0, 1, 0);
-	modelMat.rotate(measurement.at<float>(5), 0, 0, 1);
-	modelMat.rotate(measurement.at<float>(3), 1, 0, 0);
-	//modelMat.translate(estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2));
-	modelMat.translate(measurement.at<float>(0), measurement.at<float>(1), measurement.at<float>(2));
+void ofApp::updateModelKalmanFilter() {
+	ukfPoint.update(modelMat.getTranslation());
+	ukfEuler.update(modelMat.getRotate());
+//	ofLogWarning() << "measure " << modelMat.getTranslation();
+//	ofLogWarning() << "predict " << ukfPoint.getEstimation();
+	ofLogWarning() << "measure " << modelMat.getRotate().getEuler();
+	ofLogWarning() << "predict " << ukfEuler.getEstimation().getEuler();
+//	modelMat.makeIdentityMatrix();
+//	modelMat.translate(ukfPoint.getEstimation());
+//	modelMat.rotate(ukfEuler.getEstimation());
 }
 
 void ofApp::updateInitMesh() {
