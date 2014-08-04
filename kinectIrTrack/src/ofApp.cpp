@@ -87,8 +87,8 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	ukfPoint.init(0.01, 0.1);
-	ukfEuler.init(0.01, 0.1);
+	ukfPoint.init(0.1, 0.1);
+	ukfEuler.init(0.1, 0.1);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxUkfPoint3d ukf;
 		ukf.init(0.01, 0.1);
@@ -277,28 +277,37 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 		H = H + p0 * pC.t();
 	}
 	
+	// latency compensation
+	float dt = 4.f;
+	
+	// predict centroid
 	ukfPoint.update(cC);
 	cC = ukfPoint.getEstimation();
 	ofVec3f v = ukfPoint.getVelocity();
-	float dt = 4.f;
-	centroidC = (cv::Mat1f(3, 1) << cC.x + v.x * dt, cC.y + v.y * dt, cC.z + v.z * dt);
+	cC = cC + v * dt;
 	
+	// predict Euler angle
 	cv::SVD svd(H);
 	cv::Mat R = svd.vt.t() * svd.u.t();
-	cv::Mat T = -R * centroid0 + centroidC;
 	mat.set(R.at<float>(0, 0), R.at<float>(1, 0), R.at<float>(2, 0), 0,
-				 R.at<float>(0, 1), R.at<float>(1, 1), R.at<float>(2, 1), 0,
-				 R.at<float>(0, 2), R.at<float>(1, 2), R.at<float>(2, 2), 0,
-				 T.at<float>(0), T.at<float>(1), T.at<float>(2), 1);
+			R.at<float>(0, 1), R.at<float>(1, 1), R.at<float>(2, 1), 0,
+			R.at<float>(0, 2), R.at<float>(1, 2), R.at<float>(2, 2), 0,
+			0, 0, 0, 1);
+	ukfEuler.update(mat.getRotate());
+	ofVec3f pEuler = ukfEuler.ofxUkfPoint_<double, 3>::getEstimation();
+	ofVec3f vEuler = ukfEuler.ofxUkfPoint_<double, 3>::getVelocity();
+	ofQuaternion qPredicted;
+	qPredicted.set(0, 0, 0, 1);
+	qPredicted.makeRotate(pEuler.x + vEuler.x * dt, ofVec3f(1, 0, 0), pEuler.z + vEuler.z * dt, ofVec3f(0, 0, 1), pEuler.y + vEuler.y * dt, ofVec3f(0, 1, 0));
+	
+	// update model matrix
+	mat.setRotate(qPredicted);
+	ofVec3f T = cC - ofMatrix4x4::getTransposedOf(mat) * c0; // mat must be transposed for multiplication
+	mat.setTranslation(T);
 	return mat;
 }
 
 void ofApp::updateModelKalmanFilter() {
-//	ukfPoint.update(modelMat.getTranslation());
-//	ukfEuler.update(modelMat.getRotate());
-//	modelMat.makeIdentityMatrix();
-//	modelMat.translate(ukfPoint.getEstimation());
-//	modelMat.rotate(ukfEuler.getEstimation());
 }
 
 void ofApp::updateInitMesh() {
