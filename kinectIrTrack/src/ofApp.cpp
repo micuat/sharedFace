@@ -137,7 +137,14 @@ void ofApp::update() {
 					}
 				}
 			}
-			if( 1 || registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
+			for( int i = 0; i < registeredLabels.size(); i++ ) {
+				for( int j = i + 1; j < registeredLabels.size(); j++ ) {
+					if( registeredLabels.at(i) == registeredLabels.at(j) ) {
+						bNeedReregister = true;
+					}
+				}
+			}
+			if( registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
 				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
 			} else { // rely on tracker
 				updateTargetUsingLabels(markers, markerLabels, registeredLabels, target);
