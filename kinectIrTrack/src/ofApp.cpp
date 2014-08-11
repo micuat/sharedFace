@@ -40,7 +40,7 @@ void ofApp::init() {
 	ofSetLogLevel(OF_LOG_WARNING);
 	
 	// enable depth->video image calibration
-	kinect.setRegistration(true);
+	kinect.setRegistration(false);
     
 	kinect.init();
 	while( !kinect.isFrameNewVideo() ) {
@@ -112,7 +112,9 @@ void ofApp::update() {
 			contourFinder.findContours(blurred);
 		}
 		
-		updatePointCloud(mesh);
+		if( cameraMode == EASYCAM_MODE ) {
+			updatePointCloud(mesh);
+		}
 		
 		ofMesh markers, markersProjected;
 		vector<int> markerLabels;
@@ -122,7 +124,7 @@ void ofApp::update() {
 			ofVec3f marker;
 			if( findVec3fFromRect(rect, marker) ) { // skip if not enough neighbors
 				markers.addVertex(marker);
-				markersProjected.addVertex(ofxCv::toOf(contourFinder.getCenter(i)));
+				markersProjected.addVertex(kinect.sensorToColorCoordinate(rect.getCenter(), marker.z));
 				markerLabels.push_back(contourFinder.getLabel(i));
 			}
 		}
@@ -176,9 +178,11 @@ void ofApp::updatePointCloud(ofMesh& m) {
 	
 	for(int y = 0; y < h; y += step) {
 		for(int x = 0; x < w; x += step) {
-			if(kinect.getDistanceAt(x, y) > 0 ) {
-				m.addVertex(kinect.getWorldCoordinateAt(x, y));
-				m.addTexCoord(ofVec2f(x, y));
+			float distance = kinect.getDistanceAt(x, y);
+			if( distance > 0 ) {
+				ofPoint coord = kinect.sensorToColorCoordinate(ofPoint(x, y));
+				m.addVertex(kinect.getWorldCoordinateAt(coord.x, coord.y, distance));
+				m.addTexCoord(coord);
 			}
 		}
 	}
@@ -200,7 +204,8 @@ bool ofApp::findVec3fFromRect(ofRectangle& rect, ofVec3f& v) {
 	centerDistance /= count;
 	float threshold = 1.f;
 	
-	v = ofVec3f(kinect.getWorldCoordinateAt(rect.getCenter().x, rect.getCenter().y, centerDistance));
+	ofVec2f rectCenter = kinect.sensorToColorCoordinate(rect.getCenter(), centerDistance);
+	v = ofVec3f(kinect.getWorldCoordinateAt(rectCenter.x, rectCenter.y, centerDistance));
 	return true;
 }
 
@@ -374,6 +379,9 @@ void ofApp::draw() {
 			
 			image.draw(image.getWidth(), 0);
 			kinect.draw(image.getWidth(), 0);
+			
+			ofSetColor(255);
+			ofDrawBitmapString(ofToString(ofGetFrameRate()) + " fps", 20, 20);
 			
 			ofDisableBlendMode();
 			ofEnableDepthTest();
