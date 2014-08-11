@@ -11,8 +11,6 @@
 #include "ofxCv.h"
 #include "ofxActiveScan.h"
 #include "ofxKinect.h"
-#include "ofxUkfPoint.h"
-#include "ofxUkfEuler.h"
 
 #define NUM_MARKERS 3
 
@@ -63,9 +61,9 @@ private:
 	vector<ofVec4f> lines;
 	ofFbo drawImage;
 	
-	ofxUkfPoint3d ukfPoint;
-	ofxUkfEuler ukfEuler;
-	vector<ofxUkfPoint3d> ukfMarkers;
+	ofxCv::KalmanPosition kalmanPosition;
+	ofxCv::KalmanEuler kalmanEuler;
+	vector<ofxCv::KalmanPosition> kalmanMarkers;
 	
 	bool pathLoaded;
 };

@@ -87,12 +87,12 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	ukfPoint.init(0.1, 0.1);
-	ukfEuler.init(0.1, 0.1);
+	kalmanPosition.init(0.1, 0.1);
+	kalmanEuler.init(0.1, 0.1);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
-		ofxUkfPoint3d ukf;
-		ukf.init(0.01, 0.1);
-		ukfMarkers.push_back(ukf);
+		ofxCv::KalmanPosition kPos;
+		kPos.init(0.01, 0.1);
+		kalmanMarkers.push_back(kPos);
 	}
 	
 	ofEnableDepthTest();
@@ -258,8 +258,8 @@ void ofApp::updateTargetUsingLabels(ofMesh& markers, vector<int>& curLabels, vec
 
 void ofApp::updateMarkerKalmanFilter() {
 	for( int i = 0; i < target.getNumVertices(); i++ ) {
-		ukfMarkers.at(i).update(target.getVertex(i));
-		target.setVertex(i, ukfMarkers.at(i).getEstimation());
+		kalmanMarkers.at(i).update(target.getVertex(i));
+		target.setVertex(i, kalmanMarkers.at(i).getEstimation());
 	}
 }
 
@@ -288,9 +288,9 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	float dt = 4.f;
 	
 	// predict centroid
-	ukfPoint.update(cC);
-	cC = ukfPoint.getEstimation();
-	ofVec3f v = ukfPoint.getVelocity();
+	kalmanPosition.update(cC);
+	cC = kalmanPosition.getEstimation();
+	ofVec3f v = kalmanPosition.getVelocity();
 	cC = cC + v * dt;
 	
 	// predict Euler angle
@@ -300,9 +300,9 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 			R.at<float>(0, 1), R.at<float>(1, 1), R.at<float>(2, 1), 0,
 			R.at<float>(0, 2), R.at<float>(1, 2), R.at<float>(2, 2), 0,
 			0, 0, 0, 1);
-	ukfEuler.update(mat.getRotate());
-	ofVec3f pEuler = ukfEuler.ofxUkfPoint_<double, 3>::getEstimation();
-	ofVec3f vEuler = ukfEuler.ofxUkfPoint_<double, 3>::getVelocity();
+	kalmanEuler.update(mat.getRotate());
+	ofVec3f pEuler = kalmanEuler.KalmanPosition_<float>::getEstimation();
+	ofVec3f vEuler = kalmanEuler.KalmanPosition_<float>::getVelocity();
 	ofQuaternion qPredicted;
 	qPredicted.set(0, 0, 0, 1);
 	qPredicted.makeRotate(pEuler.x + vEuler.x * dt, ofVec3f(1, 0, 0), pEuler.z + vEuler.z * dt, ofVec3f(0, 0, 1), pEuler.y + vEuler.y * dt, ofVec3f(0, 1, 0));
@@ -383,7 +383,7 @@ void ofApp::draw() {
 		if( cameraMode == EASYCAM_MODE )
 			mesh.draw();
 		glPointSize(3);
-		target.draw();
+		target.drawWireframe();
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
 		drawImage.getTextureReference().bind();
 		initMesh.draw();
