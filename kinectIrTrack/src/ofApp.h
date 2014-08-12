@@ -9,7 +9,6 @@
 #include "ofMain.h"
 
 #include "ofxCv.h"
-#include "ofxActiveScan.h"
 #include "ofxKinect.h"
 
 #define NUM_MARKERS 3
@@ -37,7 +36,8 @@ public:
 	vector<string> rootDir;
 	
 private:
-	ofxActiveScan::Options options;
+	int projector_width, projector_height;
+	float projector_horizontal_center;
 	ofMesh mesh;
 	ofEasyCam cam;
 	cv::Mat proIntrinsic, proExtrinsic;
@@ -46,8 +46,6 @@ private:
 	
 	enum CameraMode {EASYCAM_MODE, PRO_MODE, CAM_MODE};
 	CameraMode cameraMode;
-	
-	int cw, ch;
 	
 	ofxKinect kinect;
 	ofxCv::ContourFinder contourFinder;

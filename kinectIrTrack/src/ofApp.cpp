@@ -6,8 +6,6 @@
 
 #include "ofApp.h"
 
-using namespace ofxActiveScan;
-
 double getLongestDistance(ofMesh m) {
 	int n = m.getNumVertices();
 	double longestDistance = 0;
@@ -57,17 +55,13 @@ void ofApp::init() {
 	cameraMode = EASYCAM_MODE;
 	
 	cv::FileStorage fs(ofToDataPath(rootDir[0] + "/config.yml"), cv::FileStorage::READ);
-	fs["proWidth"] >> options.projector_width;
-	fs["proHeight"] >> options.projector_height;
-	fs["vertical_center"] >> options.projector_horizontal_center;
-	fs["nsamples"] >> options.nsamples;
+	fs["proWidth"] >> proSize.width;
+	fs["proHeight"] >> proSize.height;
 	
 	cv::FileStorage cfs(ofToDataPath(rootDir[0] + "/calibration.yml"), cv::FileStorage::READ);
 	cfs["proIntrinsic"] >> proIntrinsic;
 	cfs["proExtrinsic"] >> proExtrinsic;
 	
-	proSize.width = options.projector_width;
-	proSize.height = options.projector_height;
 	cout << proIntrinsic << endl;
 	cout << proExtrinsic << endl;
 	
@@ -348,7 +342,7 @@ void ofApp::draw() {
 			ofScale(1, -1, -1);
 			ofTranslate(0, 0, -2);
 		} else if(cameraMode == PRO_MODE) {
-			ofSetupScreenPerspective(options.projector_width, options.projector_height);
+			ofSetupScreenPerspective(proSize.width, proSize.height);
 			proCalibration.loadProjectionMatrix(0.0001, 100000000.0);
 			cv::Mat m = proExtrinsic;
 			cv::Mat extrinsics = (cv::Mat1d(4,4) <<

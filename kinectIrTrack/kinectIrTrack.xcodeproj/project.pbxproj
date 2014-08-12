@@ -4428,7 +4428,6 @@
 					<key>HEADER_SEARCH_PATHS</key>
 					<array>
 						<string>$(OF_CORE_HEADERS)</string>
-						<string>src</string>
 						<string>../../../addons/ofxKinect/libs</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect/include</string>
@@ -4495,6 +4494,7 @@
 						<string>../../../addons/ofxCv/libs/ofxCv/include/ofxCv</string>
 						<string>../../../addons/ofxCv/libs/ofxCv/src</string>
 						<string>../../../addons/ofxCv/src</string>
+						<string>src</string>
 					</array>
 					<key>ARCHS</key>
 					<string>$(NATIVE_ARCH)</string>
@@ -4566,7 +4566,6 @@
 					<key>HEADER_SEARCH_PATHS</key>
 					<array>
 						<string>$(OF_CORE_HEADERS)</string>
-						<string>src</string>
 						<string>../../../addons/ofxKinect/libs</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect/include</string>
@@ -4633,6 +4632,7 @@
 						<string>../../../addons/ofxCv/libs/ofxCv/include/ofxCv</string>
 						<string>../../../addons/ofxCv/libs/ofxCv/src</string>
 						<string>../../../addons/ofxCv/src</string>
+						<string>src</string>
 					</array>
 					<key>ARCHS</key>
 					<string>$(NATIVE_ARCH)</string>

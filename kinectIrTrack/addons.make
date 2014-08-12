@@ -1,4 +1,3 @@
 ofxKinect
 ofxOpenCv
-ofxActiveScan
 ofxCv
