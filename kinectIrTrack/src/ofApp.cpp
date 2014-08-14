@@ -81,8 +81,8 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	kalmanPosition.init(0.1, 0.1);
-	kalmanEuler.init(0.1, 0.1);
+	kalmanPosition.init(0.1, 0.1, true);
+	kalmanEuler.init(0.1, 0.1, true);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
 		kPos.init(0.01, 0.1);
@@ -141,6 +141,14 @@ void ofApp::update() {
 				}
 			}
 			if( registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
+				kalmanPosition.init(0.1, 0.1, true);
+				kalmanEuler.init(0.1, 0.1, true);
+				kalmanMarkers.clear();
+				for( int i = 0; i < NUM_MARKERS; i++ ) {
+					ofxCv::KalmanPosition kPos;
+					kPos.init(0.01, 0.1);
+					kalmanMarkers.push_back(kPos);
+				}
 				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
 			} else { // rely on tracker
 				updateTargetUsingLabels(markers, markerLabels, registeredLabels, target);
@@ -284,13 +292,15 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	}
 	
 	// latency compensation
-	float dt = 4.f;
+	float dt = 4.46f;
 	
 	// predict centroid
 	kalmanPosition.update(cC);
 	cC = kalmanPosition.getEstimation();
 	ofVec3f v = kalmanPosition.getVelocity();
 	cC = cC + v * dt;
+	
+	dt = 0;
 	
 	// predict Euler angle
 	cv::SVD svd(H);
