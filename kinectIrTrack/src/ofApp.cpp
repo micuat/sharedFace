@@ -85,7 +85,7 @@ void ofApp::init() {
 	kalmanEuler.init(0.1, 0.1, true);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(0.01, 0.1);
+		kPos.init(0.001, 0.1);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -395,6 +395,9 @@ void ofApp::draw() {
 		if( cameraMode == EASYCAM_MODE )
 			mesh.draw();
 		glPointSize(3);
+		ofPushMatrix();
+		if( cameraMode == PRO_MODE )
+			ofTranslate(kalmanPosition.getVelocity() * 4.46f);
 		target.drawWireframe();
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
 		drawImage.getTextureReference().bind();
