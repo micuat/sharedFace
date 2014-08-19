@@ -1,3 +1,4 @@
 ofxKinect
 ofxOpenCv
 ofxCv
+ofxDelaunay

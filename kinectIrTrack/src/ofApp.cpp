@@ -183,7 +183,8 @@ void ofApp::updatePointCloud(ofMesh& m) {
 			float distance = kinect.getDistanceAt(x, y);
 			if( distance > 0 ) {
 				ofPoint coord = kinect.sensorToColorCoordinate(ofPoint(x, y));
-				m.addVertex(kinect.getWorldCoordinateAt(coord.x, coord.y, distance));
+				ofPoint p = kinect.getWorldCoordinateAt(coord.x, coord.y, distance);
+				m.addVertex(p);
 				m.addTexCoord(coord);
 			}
 		}
@@ -329,17 +330,22 @@ void ofApp::updateModelKalmanFilter() {
 void ofApp::updateInitMesh() {
 	double distanceProj = getLongestDistance(target);
 	
+	ofxDelaunay triangulation;
+	
 	initMesh.clear();
-	initMesh.setMode(OF_PRIMITIVE_POINTS);
+	initMesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	for( int i = 0; i < mesh.getNumVertices(); i++ ) {
 		for( int j = 0; j < target.getNumVertices(); j++ ) {
 			if( mesh.getVertex(i).distance(target.getVertex(j)) < distanceProj * 2.0 ) {
 				initMesh.addVertex(mesh.getVertex(i));
 				initMesh.addTexCoord(mesh.getTexCoord(i));
+				triangulation.addPoint(mesh.getVertex(i));
 				break;
 			}
 		}
 	}
+	triangulation.triangulate();
+	initMesh.addIndices(triangulation.triangleMesh.getIndices());
 }
 
 void ofApp::draw() {
@@ -395,11 +401,14 @@ void ofApp::draw() {
 		if( cameraMode == EASYCAM_MODE )
 			mesh.draw();
 		glPointSize(3);
-		ofPushMatrix();
-		if( cameraMode == PRO_MODE )
-			ofTranslate(kalmanPosition.getVelocity() * 4.46f);
-		target.drawWireframe();
+		//target.drawWireframe();
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
+//		if( cameraMode == PRO_MODE ) {
+//			ofPoint euler = kalmanEuler.ofxCv::KalmanPosition_<float>::getEstimation();
+//			ofColor color;
+//			color.setHsb((int)(euler.y+180) % 360, 255, 255);
+//			ofSetColor(color);
+//		}
 		drawImage.getTextureReference().bind();
 		initMesh.draw();
 		drawImage.getTextureReference().unbind();

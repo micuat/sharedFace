@@ -10,6 +10,7 @@
 
 #include "ofxCv.h"
 #include "ofxKinect.h"
+#include "ofxDelaunay.h"
 
 #define NUM_MARKERS 3
 

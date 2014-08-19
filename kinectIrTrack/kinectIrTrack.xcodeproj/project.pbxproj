@@ -9,6 +9,135 @@
 		<string>46</string>
 		<key>objects</key>
 		<dict>
+			<key>E5565AD6CF66D6A14BDF7EA1</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>sourcecode.c.h</string>
+				<key>fileEncoding</key>
+				<string>30</string>
+				<key>isa</key>
+				<string>PBXFileReference</string>
+				<key>name</key>
+				<string>Delaunay.h</string>
+				<key>path</key>
+				<string>../../../addons/ofxDelaunay/libs/Delaunay/Delaunay.h</string>
+				<key>sourceTree</key>
+				<string>SOURCE_ROOT</string>
+			</dict>
+			<key>A7F935964A1EB7154C211E37</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>2C93371FF2466553B4DA1D0B</string>
+					<string>E5565AD6CF66D6A14BDF7EA1</string>
+				</array>
+				<key>isa</key>
+				<string>PBXGroup</string>
+				<key>name</key>
+				<string>Delaunay</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>4DDDE89A215FFC6D84084F64</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>A7F935964A1EB7154C211E37</string>
+				</array>
+				<key>isa</key>
+				<string>PBXGroup</string>
+				<key>name</key>
+				<string>libs</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>5E39F94A08ADD7F0C2032152</key>
+			<dict>
+				<key>fileRef</key>
+				<string>2C93371FF2466553B4DA1D0B</string>
+				<key>isa</key>
+				<string>PBXBuildFile</string>
+			</dict>
+			<key>2C93371FF2466553B4DA1D0B</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>sourcecode.cpp.cpp</string>
+				<key>fileEncoding</key>
+				<string>30</string>
+				<key>isa</key>
+				<string>PBXFileReference</string>
+				<key>name</key>
+				<string>Delaunay.cpp</string>
+				<key>path</key>
+				<string>../../../addons/ofxDelaunay/libs/Delaunay/Delaunay.cpp</string>
+				<key>sourceTree</key>
+				<string>SOURCE_ROOT</string>
+			</dict>
+			<key>8AA89AFF4E71C7EC510642B7</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>sourcecode.c.h</string>
+				<key>fileEncoding</key>
+				<string>30</string>
+				<key>isa</key>
+				<string>PBXFileReference</string>
+				<key>name</key>
+				<string>ofxDelaunay.h</string>
+				<key>path</key>
+				<string>../../../addons/ofxDelaunay/src/ofxDelaunay.h</string>
+				<key>sourceTree</key>
+				<string>SOURCE_ROOT</string>
+			</dict>
+			<key>BA7CA251A8C3541F18ECFFC2</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>BBE3E908E4BB3468853C50ED</string>
+					<string>8AA89AFF4E71C7EC510642B7</string>
+				</array>
+				<key>isa</key>
+				<string>PBXGroup</string>
+				<key>name</key>
+				<string>src</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>5A296432AD6765AD9158F813</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>BA7CA251A8C3541F18ECFFC2</string>
+					<string>4DDDE89A215FFC6D84084F64</string>
+				</array>
+				<key>isa</key>
+				<string>PBXGroup</string>
+				<key>name</key>
+				<string>ofxDelaunay</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>9102D0609CDD0B902F138C68</key>
+			<dict>
+				<key>fileRef</key>
+				<string>BBE3E908E4BB3468853C50ED</string>
+				<key>isa</key>
+				<string>PBXBuildFile</string>
+			</dict>
+			<key>BBE3E908E4BB3468853C50ED</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>sourcecode.cpp.cpp</string>
+				<key>fileEncoding</key>
+				<string>30</string>
+				<key>isa</key>
+				<string>PBXFileReference</string>
+				<key>name</key>
+				<string>ofxDelaunay.cpp</string>
+				<key>path</key>
+				<string>../../../addons/ofxDelaunay/src/ofxDelaunay.cpp</string>
+				<key>sourceTree</key>
+				<string>SOURCE_ROOT</string>
+			</dict>
 			<key>DBCB84A37F9AECC254870D79</key>
 			<dict>
 				<key>fileRef</key>
@@ -3211,6 +3340,7 @@
 					<string>9683228C705CA3FF4F2EA945</string>
 					<string>A0B90D3B0ADB9C1716816714</string>
 					<string>6025FAF6414C2CA589764D26</string>
+					<string>5A296432AD6765AD9158F813</string>
 				</array>
 				<key>isa</key>
 				<string>PBXGroup</string>
@@ -3603,7 +3733,6 @@
 					<key>HEADER_SEARCH_PATHS</key>
 					<array>
 						<string>$(OF_CORE_HEADERS)</string>
-						<string>src</string>
 						<string>../../../addons/ofxKinect/libs</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect/include</string>
@@ -3648,6 +3777,10 @@
 						<string>../../../addons/ofxCv/libs/ofxCv/include/ofxCv</string>
 						<string>../../../addons/ofxCv/libs/ofxCv/src</string>
 						<string>../../../addons/ofxCv/src</string>
+						<string>src</string>
+						<string>../../../addons/ofxDelaunay/libs</string>
+						<string>../../../addons/ofxDelaunay/libs/Delaunay</string>
+						<string>../../../addons/ofxDelaunay/src</string>
 					</array>
 					<key>ARCHS</key>
 					<string>$(NATIVE_ARCH)</string>
@@ -3712,7 +3845,6 @@
 					<key>HEADER_SEARCH_PATHS</key>
 					<array>
 						<string>$(OF_CORE_HEADERS)</string>
-						<string>src</string>
 						<string>../../../addons/ofxKinect/libs</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect</string>
 						<string>../../../addons/ofxKinect/libs/libfreenect/include</string>
@@ -3757,6 +3889,10 @@
 						<string>../../../addons/ofxCv/libs/ofxCv/include/ofxCv</string>
 						<string>../../../addons/ofxCv/libs/ofxCv/src</string>
 						<string>../../../addons/ofxCv/src</string>
+						<string>src</string>
+						<string>../../../addons/ofxDelaunay/libs</string>
+						<string>../../../addons/ofxDelaunay/libs/Delaunay</string>
+						<string>../../../addons/ofxDelaunay/src</string>
 					</array>
 					<key>ARCHS</key>
 					<string>$(NATIVE_ARCH)</string>
@@ -3847,6 +3983,8 @@
 					<string>10B69DE456AED1288FC9316B</string>
 					<string>A6668C5B1272D7FCD5B5A16F</string>
 					<string>DBCB84A37F9AECC254870D79</string>
+					<string>9102D0609CDD0B902F138C68</string>
+					<string>5E39F94A08ADD7F0C2032152</string>
 				</array>
 				<key>isa</key>
 				<string>PBXSourcesBuildPhase</string>
