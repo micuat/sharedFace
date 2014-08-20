@@ -12,7 +12,7 @@
 #include "ofxKinect.h"
 #include "ofxDelaunay.h"
 
-#define NUM_MARKERS 3
+#define NUM_MARKERS 4
 
 class ofApp : public ofBaseApp {
 public:

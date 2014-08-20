@@ -214,38 +214,47 @@ bool ofApp::findVec3fFromRect(ofRectangle& rect, ofVec3f& v) {
 
 vector<int> ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected, vector<int>& markerLabels, ofMesh& markersRegistered) {
 	vector<int> labels;
-	labels.resize(3, markerLabels.at(0));
+	labels.resize(NUM_MARKERS, markerLabels.at(0));
 	
+	ofVec3f tlMarker = markers.getVertex(0);
 	ofVec3f trMarker = markers.getVertex(0);
 	ofVec3f blMarker = markers.getVertex(0);
 	ofVec3f brMarker = markers.getVertex(0);
+	float tlDist = markersProjected.getVertex(0).distance(ofVec2f(0, 0));
 	float trDist = markersProjected.getVertex(0).distance(ofVec2f(kinect.width, 0));
 	float blDist = markersProjected.getVertex(0).distance(ofVec2f(0, kinect.height));
 	float brDist = markersProjected.getVertex(0).distance(ofVec2f(kinect.width, kinect.height));
 	for( int i = 1; i < markers.getNumVertices(); i++ ) {
 		ofVec2f p = markersProjected.getVertex(i);
 		
+		float curtlDist = p.distance(ofVec2f(0, 0));
 		float curtrDist = p.distance(ofVec2f(kinect.width, 0));
 		float curblDist = p.distance(ofVec2f(0, kinect.height));
 		float curbrDist = p.distance(ofVec2f(kinect.width, kinect.height));
+		if( curtlDist < tlDist ) {
+			tlDist = curtlDist;
+			tlMarker = markers.getVertex(i);
+			labels.at(0) = markerLabels.at(i);
+		}
 		if( curtrDist < trDist ) {
 			trDist = curtrDist;
 			trMarker = markers.getVertex(i);
-			labels.at(0) = markerLabels.at(i);
+			labels.at(1) = markerLabels.at(i);
 		}
 		if( curblDist < blDist ) {
 			blDist = curblDist;
 			blMarker = markers.getVertex(i);
-			labels.at(1) = markerLabels.at(i);
+			labels.at(2) = markerLabels.at(i);
 		}
 		if( curbrDist < brDist ) {
 			brDist = curbrDist;
 			brMarker = markers.getVertex(i);
-			labels.at(2) = markerLabels.at(i);
+			labels.at(3) = markerLabels.at(i);
 		}
 	}
 	
 	markersRegistered.clear();
+	markersRegistered.addVertex(tlMarker);
 	markersRegistered.addVertex(trMarker);
 	markersRegistered.addVertex(blMarker);
 	markersRegistered.addVertex(brMarker);
@@ -403,12 +412,12 @@ void ofApp::draw() {
 		glPointSize(3);
 		//target.drawWireframe();
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
-//		if( cameraMode == PRO_MODE ) {
-//			ofPoint euler = kalmanEuler.ofxCv::KalmanPosition_<float>::getEstimation();
-//			ofColor color;
-//			color.setHsb((int)(euler.y+180) % 360, 255, 255);
-//			ofSetColor(color);
-//		}
+		if( cameraMode == PRO_MODE ) {
+			ofPoint euler = kalmanEuler.ofxCv::KalmanPosition_<float>::getEstimation();
+			ofColor color;
+			color.setHsb((int)(euler.z+180) % 360, 255, 255);
+			ofSetColor(color);
+		}
 		drawImage.getTextureReference().bind();
 		initMesh.draw();
 		drawImage.getTextureReference().unbind();
