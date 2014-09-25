@@ -320,11 +320,7 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 			R.at<float>(0, 2), R.at<float>(1, 2), R.at<float>(2, 2), 0,
 			0, 0, 0, 1);
 	kalmanEuler.update(mat.getRotate());
-	ofVec3f pEuler = kalmanEuler.KalmanPosition_<float>::getEstimation();
-	ofVec3f vEuler = kalmanEuler.KalmanPosition_<float>::getVelocity();
-	ofQuaternion qPredicted;
-	qPredicted.set(0, 0, 0, 1);
-	qPredicted.makeRotate(pEuler.x + vEuler.x * dt, ofVec3f(1, 0, 0), pEuler.z + vEuler.z * dt, ofVec3f(0, 0, 1), pEuler.y + vEuler.y * dt, ofVec3f(0, 1, 0));
+	ofQuaternion qPredicted = kalmanEuler.getEstimation();
 	
 	// update model matrix
 	mat.setRotate(qPredicted);

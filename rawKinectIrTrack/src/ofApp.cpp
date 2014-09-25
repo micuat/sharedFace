@@ -42,7 +42,7 @@ void ofApp::setup() {
 	
 	// zero the tilt on startup
 	angle = 0;
-	kinect.setCameraTiltAngle(angle);
+	//kinect.setCameraTiltAngle(angle);
 	
 	// start from the front
 	bDrawPointCloud = false;
@@ -214,7 +214,7 @@ void ofApp::drawPointCloud() {
 
 //--------------------------------------------------------------
 void ofApp::exit() {
-	kinect.setCameraTiltAngle(0); // zero the tilt on exit
+	//kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
 	
 #ifdef USE_TWO_KINECTS
