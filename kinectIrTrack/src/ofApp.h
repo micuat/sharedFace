@@ -22,6 +22,7 @@ public:
 	void draw();
 	void updatePointCloud(ofMesh&);
 	bool findVec3fFromRect(ofRectangle&, ofVec3f&);
+	void findVec3fFromFitting(vector<cv::Point>&, ofMesh&);
 	vector<int> registerMarkers(ofMesh&, ofMesh&, vector<int>&, ofMesh&);
 	void updateTargetUsingLabels(ofMesh&, vector<int>&, vector<int>&, ofMesh&);
 	void updateMarkerKalmanFilter();
@@ -50,7 +51,7 @@ private:
 	
 	ofxKinect kinect;
 	ofxCv::ContourFinder contourFinder;
-	ofMesh target, initTarget;
+	ofMesh target, initTarget, markers, samples;
 	ofMesh initMesh;
 	ofImage image;
 	ofMatrix4x4 modelMat;

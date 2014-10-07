@@ -68,11 +68,11 @@ void ofApp::init() {
 	// set parameters for projection
 	proCalibration.setup(proIntrinsic, proSize);
 	
-	contourFinder.setMinAreaRadius(3);
+	contourFinder.setMinAreaRadius(1);
 	contourFinder.setMaxAreaRadius(15);
 	contourFinder.setFindHoles(true);
 	contourFinder.setTargetColor(0);
-	contourFinder.setThreshold(128);
+	contourFinder.setThreshold(200);
 	// wait for half a frame before forgetting something
 	contourFinder.getTracker().setPersistence(60);
 	// an object can move up to 32 pixels per frame
@@ -81,8 +81,8 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width, kinect.height);
 	
 	// Kalman filter
-	kalmanPosition.init(0.1, 0.1, true);
-	kalmanEuler.init(0.1, 0.1, true);
+	kalmanPosition.init(0.01, 0.1, true);
+	kalmanEuler.init(0.01, 0.1, true);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
 		kPos.init(0.001, 0.1);
@@ -93,6 +93,8 @@ void ofApp::init() {
 }
 
 void ofApp::update() {
+	ofSetWindowTitle(ofToString(ofGetFrameRate()));
+	
 	kinect.update();
 	if(kinect.isFrameNew()) {
 		bool bFindHoles = false;
@@ -110,17 +112,22 @@ void ofApp::update() {
 			updatePointCloud(mesh);
 		}
 		
-		ofMesh markers, markersProjected;
+		markers.clear();
+		ofMesh markersProjected;
 		vector<int> markerLabels;
+		vector<cv::Point> sensorCoords;
 		ofxCv::RectTracker& tracker = contourFinder.getTracker();
-		for(int i = 0; i < contourFinder.size(); i++) {
-			ofRectangle rect = ofxCv::toOf(contourFinder.getBoundingRect(i));
-			ofVec3f marker;
-			if( findVec3fFromRect(rect, marker) ) { // skip if not enough neighbors
-				markers.addVertex(marker);
-				markersProjected.addVertex(kinect.sensorToColorCoordinate(rect.getCenter(), marker.z));
+		if( contourFinder.size() == 4 ) {
+			for(int i = 0; i < contourFinder.size(); i++) {
+				sensorCoords.push_back(contourFinder.getCenter(i));
+			}
+			findVec3fFromFitting(sensorCoords, markers);
+			for(int i = 0; i < contourFinder.size(); i++) {
+				markersProjected.addVertex(kinect.sensorToColorCoordinate(ofxCv::toOf(sensorCoords.at(i)), markers.getVertex(i).z));
 				markerLabels.push_back(contourFinder.getLabel(i));
 			}
+		} else {
+			return;
 		}
 		
 		if( markers.getNumVertices() > 0 ) {
@@ -210,6 +217,60 @@ bool ofApp::findVec3fFromRect(ofRectangle& rect, ofVec3f& v) {
 	ofVec2f rectCenter = kinect.sensorToColorCoordinate(rect.getCenter(), centerDistance);
 	v = ofVec3f(kinect.getWorldCoordinateAt(rectCenter.x, rectCenter.y, centerDistance));
 	return true;
+}
+
+void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
+	vector<cv::Point> hull;
+	vector<ofVec2f> centersOf;
+	cv::Mat measurement = cv::Mat_<double>::zeros(0, 3); // rows 0, cols 3
+	cv::Mat solution; // ax + by + cz = 1
+	if( centers.size() == 4 ) {
+		cv::convexHull(centers, hull, false );
+		
+		for( int i = 0; i < centers.size(); i++ ) {
+			centersOf.push_back(ofxCv::toOf(centers.at(i)));
+		}
+		
+		int count = 0;
+		int numSamples = 100;
+		samples.clear();
+		samples.setMode(OF_PRIMITIVE_POINTS);
+		while( count < numSamples ) {
+			float p0 = ofRandom(1.0);
+			float p1 = ofRandom(1.0);
+			
+			ofVec2f v01 = centersOf.at(0).getInterpolated(centersOf.at(1), p0);
+			ofVec2f v32 = centersOf.at(2).getInterpolated(centersOf.at(3), p0);
+			ofVec2f sample = v01.getInterpolated(v32, p1);
+			
+			float dist = kinect.getDistanceAt(sample);
+			if( dist > 0 ) {
+				ofVec3f sample3d(sample.x, sample.y, dist);
+				cv::Mat m = cv::Mat_<double>::zeros(1, 3);
+				m.at<double>(0, 0) = sample3d.x;
+				m.at<double>(0, 1) = sample3d.y;
+				m.at<double>(0, 2) = sample3d.z;
+				measurement.push_back(m);
+				samples.addVertex(sample);
+				count++;
+			}
+		}
+		cv::Mat oneMat = cv::Mat_<double>::ones(numSamples, 1);
+		cv::Mat pinvMat = measurement.inv(cv::DECOMP_SVD);
+		solution = pinvMat * oneMat;
+		ofLogWarning() << solution.at<double>(0, 0) << " " << solution.at<double>(1, 0) << " " << solution.at<double>(2, 0);
+		for( int i = 0; i < centers.size(); i++ ) {
+			// z = (1 - ax - by) / c
+			float z = (1.0 - solution.at<double>(0, 0) * centers.at(i).x - solution.at<double>(1, 0) * centers.at(i).y) / solution.at<double>(2, 0);
+			ofVec3f v = kinect.sensorToColorCoordinate(ofxCv::toOf(centers.at(i)), z);
+			markers.addVertex(kinect.getWorldCoordinateAt(v.x, v.y, z));
+			ofLogWarning() << markers.getVertex(i);
+		}
+	} else {
+		for( int i = 0; i < centers.size(); i++ ) {
+			markers.addVertex(ofVec3f());
+		}
+	}
 }
 
 vector<int> ofApp::registerMarkers(ofMesh& markers, ofMesh& markersProjected, vector<int>& markerLabels, ofMesh& markersRegistered) {
@@ -302,7 +363,8 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 	}
 	
 	// latency compensation
-	float dt = 4.46f;
+	//float dt = 4.46f;
+	float dt = 0;
 	
 	// predict centroid
 	kalmanPosition.update(cC);
@@ -362,6 +424,11 @@ void ofApp::draw() {
 			cam.begin();
 			ofScale(1, -1, -1);
 			ofTranslate(0, 0, -2);
+			ofPushStyle();
+			ofSetColor(ofColor::pink);
+			glPointSize(3);
+			markers.drawVertices();
+			ofPopStyle();
 		} else if(cameraMode == PRO_MODE) {
 			ofSetupScreenPerspective(proSize.width, proSize.height);
 			proCalibration.loadProjectionMatrix(0.0001, 100000000.0);
@@ -395,6 +462,15 @@ void ofApp::draw() {
 			image.draw(image.getWidth(), 0);
 			kinect.draw(image.getWidth(), 0);
 			
+			ofPushStyle();
+			ofPushMatrix();
+			ofTranslate(image.getWidth(), 0, 0);
+			ofSetColor(255);
+			glPointSize(1);
+			samples.draw();
+			ofPopMatrix();
+			ofPopStyle();
+			
 			ofSetColor(255);
 			ofDrawBitmapString(ofToString(ofGetFrameRate()) + " fps", 20, 20);
 			
@@ -410,9 +486,7 @@ void ofApp::draw() {
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
 		if( cameraMode == PRO_MODE ) {
 			ofPoint euler = kalmanEuler.ofxCv::KalmanPosition_<float>::getEstimation();
-			ofColor color;
-			color.setHsb((int)(euler.z+180) % 360, 255, 255);
-			ofSetColor(color);
+			ofSetColor(255);
 		}
 		drawImage.getTextureReference().bind();
 		initMesh.draw();

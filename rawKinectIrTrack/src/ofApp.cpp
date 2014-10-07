@@ -28,7 +28,7 @@ void ofApp::setup() {
 	kinect2.open();
 #endif
 	
-	contourFinder.setMinAreaRadius(3);
+	contourFinder.setMinAreaRadius(1);
 	contourFinder.setMaxAreaRadius(15);
 	contourFinder.setFindHoles(true);
 	contourFinder.setTargetColor(0);
