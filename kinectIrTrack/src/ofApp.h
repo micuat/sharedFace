@@ -11,8 +11,10 @@
 #include "ofxCv.h"
 #include "ofxKinect.h"
 #include "ofxDelaunay.h"
+#include "ofxOsc.h"
 
 #define NUM_MARKERS 4
+#define PORT 57130
 
 class ofApp : public ofBaseApp {
 public:
@@ -29,6 +31,7 @@ public:
 	ofMatrix4x4 findRigidTransformation(ofMesh&, ofMesh&);
 	void updateModelKalmanFilter();
 	void updateInitMesh();
+	void updateReceiveOsc();
 	void keyPressed(int);
 	void mousePressed(int x, int y, int button);
 	void mouseDragged(int x, int y, int button);
@@ -58,6 +61,7 @@ private:
 	vector<int> registeredLabels;
 	
 	bool bReset;
+	ofxOscReceiver receiver;
 	vector<ofVec4f> lines;
 	ofFbo drawImage;
 	

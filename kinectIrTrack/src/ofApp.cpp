@@ -37,6 +37,8 @@ void ofApp::setup() {
 void ofApp::init() {
 	ofSetLogLevel(OF_LOG_WARNING);
 	
+	receiver.setup(PORT);
+	
 	// enable depth->video image calibration
 	kinect.setRegistration(false);
     
@@ -173,6 +175,8 @@ void ofApp::update() {
 				updateInitMesh();
 				bReset = false;
 			}
+			
+			updateReceiveOsc();
 		}
 	}
 }
@@ -415,10 +419,50 @@ void ofApp::updateInitMesh() {
 	initMesh.addIndices(triangulation.triangleMesh.getIndices());
 }
 
+void ofApp::updateReceiveOsc() {
+	while(receiver.hasWaitingMessages()){
+		// get the next message
+		ofxOscMessage m;
+		receiver.getNextMessage(&m);
+		
+		float x = m.getArgAsInt32(0);
+		float y = m.getArgAsInt32(1);
+		// check for mouse moved message
+		if(m.getAddress() == "/pen/coord"){
+			// both the arguments are int32's
+			lines.at(lines.size() - 1).z = x;
+			lines.at(lines.size() - 1).w = y;
+			lines.push_back(ofVec4f(x, y, -1, -1));
+		}
+		else if(m.getAddress() == "/pen/pressed"){
+			lines.push_back(ofVec4f(x, y, -1, -1));
+		}
+		else if(m.getAddress() == "/pen/released"){
+			lines.at(lines.size() - 1).z = x;
+			lines.at(lines.size() - 1).w = y;
+		}
+		else if(m.getAddress() == "/pen/erase"){
+			lines.clear();
+		}
+	}
+}
+
 void ofApp::draw() {
 	if( pathLoaded ) {
 		
 		ofBackground(0);
+		
+		drawImage.begin();
+		ofBackground(0);
+		ofPushStyle();
+		ofSetColor(250);
+		ofSetLineWidth(2);
+		for( int i = 0; i < lines.size(); i++ ) {
+			if( lines.at(i).z < 0 || lines.at(i).w < 0 ) continue;
+			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
+		}
+		ofPopStyle();
+		drawImage.end();
 		
 		if(cameraMode == EASYCAM_MODE) {
 			cam.begin();
@@ -443,18 +487,6 @@ void ofApp::draw() {
 		} else if(cameraMode == CAM_MODE) {
 			ofDisableDepthTest();
 			ofEnableBlendMode(OF_BLENDMODE_ADD);
-			
-			drawImage.begin();
-			ofBackground(0);
-			ofPushStyle();
-			ofSetColor(250);
-			ofSetLineWidth(2);
-			for( int i = 0; i < lines.size(); i++ ) {
-				if( lines.at(i).z < 0 || lines.at(i).w < 0 ) continue;
-				ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
-			}
-			ofPopStyle();
-			drawImage.end();
 			
 			drawImage.draw(0, 0);
 			image.draw(0, 0);
