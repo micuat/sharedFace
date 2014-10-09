@@ -159,11 +159,12 @@ void ofApp::update() {
 					kalmanMarkers.push_back(kPos);
 				}
 				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
+				bReset = false;
 			} else { // rely on tracker
 				updateTargetUsingLabels(markers, markerLabels, registeredLabels, target);
 			}
 			
-			if( initTarget.getNumVertices() == 0 || bReset ) {
+			if( initTarget.getNumVertices() == 0 ) {
 				initTarget = target;
 			}
 			
@@ -171,9 +172,8 @@ void ofApp::update() {
 			modelMat = findRigidTransformation(target, initTarget);
 			updateModelKalmanFilter();
 			
-			if( initMesh.getNumVertices() == 0 || bReset ) {
+			if( initMesh.getNumVertices() == 0 ) {
 				updateInitMesh();
-				bReset = false;
 			}
 			
 			updateReceiveOsc();
