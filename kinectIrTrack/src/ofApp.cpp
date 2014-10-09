@@ -46,13 +46,17 @@ void ofApp::init() {
 	while( !kinect.isFrameNewVideo() ) {
 		kinect.update();
 		image.setFromPixels(kinect.getPixelsRef());
-		ofSleepMillis(50);
+		ofSleepMillis(500);
 	}
 	kinect.close();
 	
 	kinect.init(true);
 	
 	kinect.open();		// opens first available kinect
+	
+	// save image for processing.js
+	image.saveImage("/Users/naoto/Documents/Programs/ProcessingJsOsc/nodeClient/template/image.jpg");
+	image.saveImage("/Users/naoto/Documents/Programs/ProcessingJsOsc/nodeClient/web-export/image.jpg");
 	
 	cameraMode = EASYCAM_MODE;
 	
