@@ -80,7 +80,7 @@ void ofApp::init() {
 	// an object can move up to 32 pixels per frame
 	contourFinder.getTracker().setMaximumDistance(32);
 	
-	drawImage.allocate(kinect.width, kinect.height);
+	drawImage.allocate(kinect.width * RES_MULT, kinect.height * RES_MULT);
 	
 	// Kalman filter
 	kalmanPosition.init(0.01, 0.1, true);
@@ -93,6 +93,8 @@ void ofApp::init() {
 	
 	// stamps
 	stampCoord.resize(1);
+	
+	jsMode = 0;
 	
 	ofEnableDepthTest();
 }
@@ -199,7 +201,7 @@ void ofApp::updatePointCloud(ofMesh& m) {
 				ofPoint coord = kinect.sensorToColorCoordinate(ofPoint(x, y));
 				ofPoint p = kinect.getWorldCoordinateAt(coord.x, coord.y, distance);
 				m.addVertex(p);
-				m.addTexCoord(coord);
+				m.addTexCoord(coord * RES_MULT);
 			}
 		}
 	}
@@ -441,8 +443,10 @@ void ofApp::updateReceiveOsc() {
 			lines.push_back(ofVec4f(x, y, -1, -1));
 		}
 		else if(m.getAddress() == "/pen/released"){
-			lines.at(lines.size() - 1).z = x;
-			lines.at(lines.size() - 1).w = y;
+			if( lines.size() > 0 ) {
+				lines.at(lines.size() - 1).z = x;
+				lines.at(lines.size() - 1).w = y;
+			}
 		}
 		else if(m.getAddress() == "/pen/erase"){
 			lines.clear();
@@ -450,6 +454,10 @@ void ofApp::updateReceiveOsc() {
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
 			stampCoord.at(0).x = x;
 			stampCoord.at(0).y = y;
+		}
+		else if(m.getAddress() == "/mode/change"){
+			int mode = m.getArgAsInt32(3);
+			jsMode = mode;
 		}
 	}
 }
@@ -461,14 +469,20 @@ void ofApp::draw() {
 		
 		// fbo texture rendering
 		drawImage.begin();
+		ofScale(RES_MULT, RES_MULT); // scale for hyper resolution
 		ofBackground(0);
+		if( jsMode == 2 ) ofBackground(ofColor::gold);
 		ofPushStyle();
 		ofSetColor(250);
-		ofSetLineWidth(2);
+		
+		// lines
+		ofSetLineWidth(2 * RES_MULT);
 		for( int i = 0; i < lines.size(); i++ ) {
 			if( lines.at(i).z < 0 || lines.at(i).w < 0 ) continue;
 			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
 		}
+		
+		// stamps
 		for( int i = 0; i < stampCoord.size(); i++ ) {
 			ofCircle(stampCoord.at(i), 30);
 		}
@@ -499,7 +513,10 @@ void ofApp::draw() {
 			ofDisableDepthTest();
 			ofEnableBlendMode(OF_BLENDMODE_ADD);
 			
+			ofPushMatrix();
+			ofScale(1.0 / RES_MULT, 1.0 / RES_MULT);
 			drawImage.draw(0, 0);
+			ofPopMatrix();
 			image.draw(0, 0);
 			
 			image.draw(image.getWidth(), 0);

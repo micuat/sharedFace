@@ -15,6 +15,7 @@
 
 #define NUM_MARKERS 4
 #define PORT 57130
+#define RES_MULT 2
 
 class ofApp : public ofBaseApp {
 public:
@@ -70,6 +71,8 @@ private:
 	vector<ofxCv::KalmanPosition> kalmanMarkers;
 	
 	vector<ofVec2f> stampCoord;
+	
+	int jsMode;
 	
 	bool pathLoaded;
 };
