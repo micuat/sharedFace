@@ -69,5 +69,7 @@ private:
 	ofxCv::KalmanEuler kalmanEuler;
 	vector<ofxCv::KalmanPosition> kalmanMarkers;
 	
+	vector<ofVec2f> stampCoord;
+	
 	bool pathLoaded;
 };

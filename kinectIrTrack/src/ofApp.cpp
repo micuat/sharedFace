@@ -91,6 +91,9 @@ void ofApp::init() {
 		kalmanMarkers.push_back(kPos);
 	}
 	
+	// stamps
+	stampCoord.resize(1);
+	
 	ofEnableDepthTest();
 }
 
@@ -444,6 +447,10 @@ void ofApp::updateReceiveOsc() {
 		else if(m.getAddress() == "/pen/erase"){
 			lines.clear();
 		}
+		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
+			stampCoord.at(0).x = x;
+			stampCoord.at(0).y = y;
+		}
 	}
 }
 
@@ -452,6 +459,7 @@ void ofApp::draw() {
 		
 		ofBackground(0);
 		
+		// fbo texture rendering
 		drawImage.begin();
 		ofBackground(0);
 		ofPushStyle();
@@ -460,6 +468,9 @@ void ofApp::draw() {
 		for( int i = 0; i < lines.size(); i++ ) {
 			if( lines.at(i).z < 0 || lines.at(i).w < 0 ) continue;
 			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
+		}
+		for( int i = 0; i < stampCoord.size(); i++ ) {
+			ofCircle(stampCoord.at(i), 30);
 		}
 		ofPopStyle();
 		drawImage.end();
