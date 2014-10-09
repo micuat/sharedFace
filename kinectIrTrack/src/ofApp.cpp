@@ -87,8 +87,8 @@ void ofApp::init() {
 	drawImage.allocate(kinect.width * RES_MULT, kinect.height * RES_MULT);
 	
 	// Kalman filter
-	kalmanPosition.init(0.01, 0.1, true);
-	kalmanEuler.init(0.01, 0.1, true);
+	kalmanPosition.init(0.01, 0.1);
+	kalmanEuler.init(0.01, 0.1);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
 		kPos.init(0.001, 0.1);
@@ -245,7 +245,7 @@ void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
 		}
 		
 		int count = 0;
-		int numSamples = 100;
+		int numSamples = 150;
 		samples.clear();
 		samples.setMode(OF_PRIMITIVE_POINTS);
 		while( count < numSamples ) {
@@ -438,9 +438,10 @@ void ofApp::updateReceiveOsc() {
 		float y = m.getArgAsInt32(1);
 		// check for mouse moved message
 		if(m.getAddress() == "/pen/coord"){
-			// both the arguments are int32's
-			lines.at(lines.size() - 1).z = x;
-			lines.at(lines.size() - 1).w = y;
+			if( lines.size() > 0 ) {
+				lines.at(lines.size() - 1).z = x;
+				lines.at(lines.size() - 1).w = y;
+			}
 			lines.push_back(ofVec4f(x, y, -1, -1));
 		}
 		else if(m.getAddress() == "/pen/pressed"){
@@ -482,7 +483,7 @@ void ofApp::draw() {
 		// lines
 		ofSetLineWidth(2 * RES_MULT);
 		for( int i = 0; i < lines.size(); i++ ) {
-			if( lines.at(i).z < 0 || lines.at(i).w < 0 ) continue;
+			if( lines.at(i).z < 0 && lines.at(i).w < 0 ) continue;
 			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
 		}
 		
