@@ -119,6 +119,7 @@ void ofApp::init() {
 	(
 	 uniform float dist;
 	 uniform vec2 ppoint;
+	 uniform float elapsedTime;
 	 void main(){
 		 
 		 gl_TexCoord[0] = gl_MultiTexCoord0;
@@ -132,7 +133,11 @@ void ofApp::init() {
 		 
 		 // lens distortion
 		 gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
-		 gl_FrontColor = gl_Color;
+		 
+		 vec4 col = gl_Color;
+		 col = vec4(0.0, 1.0, 1.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0));
+		 col.a *= col.a;
+		 gl_FrontColor = col;
 	 }
 	 );
 	
@@ -465,7 +470,7 @@ void ofApp::updateInitMesh() {
 	initMesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	for( int i = 0; i < mesh.getNumVertices(); i++ ) {
 		for( int j = 0; j < target.getNumVertices(); j++ ) {
-			if( mesh.getVertex(i).distance(target.getVertex(j)) < distanceProj * 2.0 ) {
+			if( mesh.getVertex(i).distance(target.getVertex(j)) < distanceProj ) {
 				initMesh.addVertex(mesh.getVertex(i));
 				initMesh.addTexCoord(mesh.getTexCoord(i));
 				triangulation.addPoint(mesh.getVertex(i));
@@ -474,7 +479,18 @@ void ofApp::updateInitMesh() {
 		}
 	}
 	triangulation.triangulate();
-	initMesh.addIndices(triangulation.triangleMesh.getIndices());
+	const ofMesh& tr = triangulation.triangleMesh;
+	initMesh = tr;
+	initMesh.clearIndices();
+	float thDistance = 50.0;
+	for( int i = 0; i < tr.getNumIndices(); i+=3 ) {
+		if( tr.getVertex(tr.getIndex(i  )).distance(tr.getVertex(tr.getIndex(i+1))) > thDistance ) continue;
+		if( tr.getVertex(tr.getIndex(i+1)).distance(tr.getVertex(tr.getIndex(i+2))) > thDistance ) continue;
+		if( tr.getVertex(tr.getIndex(i+2)).distance(tr.getVertex(tr.getIndex(i  ))) > thDistance ) continue;
+		initMesh.addIndex(tr.getIndex(i  ));
+		initMesh.addIndex(tr.getIndex(i+1));
+		initMesh.addIndex(tr.getIndex(i+2));
+	}
 }
 
 void ofApp::updateReceiveOsc() {
@@ -518,6 +534,8 @@ void ofApp::updateReceiveOsc() {
 
 void ofApp::draw() {
 	if( pathLoaded ) {
+		
+		float curTime = ofGetElapsedTimef();
 		
 		ofBackground(0);
 		
@@ -599,22 +617,19 @@ void ofApp::draw() {
 		glPointSize(3);
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
 		
-		if( cameraMode == PRO_MODE ) {
-			shader.begin();
-			shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
-		}
+		shader.begin();
+		shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
+		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
 		
-		drawImage.getTextureReference().bind();
+		//drawImage.getTextureReference().bind();
 		initMesh.draw();
-		drawImage.getTextureReference().unbind();
+		//drawImage.getTextureReference().unbind();
 		
 		if( cameraMode == EASYCAM_MODE ) {
 			cam.end();
 		}
-		if( cameraMode == PRO_MODE ) {
-			shader.end();
-		}
 		
+		shader.end();
 	}
 }
 
