@@ -289,10 +289,12 @@ void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
 		}
 		
 		int count = 0;
+		int dieCount = 0;
 		int numSamples = 150;
 		samples.clear();
 		samples.setMode(OF_PRIMITIVE_POINTS);
-		while( count < numSamples ) {
+		while( count < numSamples || dieCount < numSamples ) {
+			dieCount++;
 			float p0 = ofRandom(1.0);
 			float p1 = ofRandom(1.0);
 			
@@ -311,6 +313,11 @@ void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
 				samples.addVertex(sample);
 				count++;
 			}
+		}
+		if( count < numSamples ) {
+			for( int i = 0; i < centers.size(); i++ )
+				markers.addVertex(centersOf.at(i));
+			return;
 		}
 		cv::Mat oneMat = cv::Mat_<double>::ones(numSamples, 1);
 		cv::Mat pinvMat = measurement.inv(cv::DECOMP_SVD);
