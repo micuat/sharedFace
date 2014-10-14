@@ -39,6 +39,8 @@ void ofApp::init() {
 	
 	receiver.setup(PORT);
 	
+	// acquire color image
+	
 	// enable depth->video image calibration
 	kinect.setRegistration(false);
     
@@ -50,23 +52,29 @@ void ofApp::init() {
 	}
 	kinect.close();
 	
-	kinect.init(true);
-	
-	kinect.open();		// opens first available kinect
-	
 	// save image for processing.js
 	image.saveImage("/Users/naoto/Documents/Programs/ProcessingJsOsc/nodeClient/template/image.jpg");
 	image.saveImage("/Users/naoto/Documents/Programs/ProcessingJsOsc/nodeClient/web-export/image.jpg");
 	
+	
+	// re-open with IR mode
+	kinect.init(true);
+	
+	kinect.open();		// opens first available kinect
+	
 	cameraMode = EASYCAM_MODE;
 	
+	
+	// load calibration parameters
 	cv::FileStorage fs(ofToDataPath(rootDir[0] + "/config.yml"), cv::FileStorage::READ);
 	fs["proWidth"] >> proSize.width;
 	fs["proHeight"] >> proSize.height;
 	
+	float lensDist;
 	cv::FileStorage cfs(ofToDataPath(rootDir[0] + "/calibration.yml"), cv::FileStorage::READ);
 	cfs["proIntrinsic"] >> proIntrinsic;
 	cfs["proExtrinsic"] >> proExtrinsic;
+	cfs["radialLensDistortion"] >> lensDist;
 	
 	cout << proIntrinsic << endl;
 	cout << proExtrinsic << endl;
@@ -74,6 +82,8 @@ void ofApp::init() {
 	// set parameters for projection
 	proCalibration.setup(proIntrinsic, proSize);
 	
+	
+	// tracker setup
 	contourFinder.setMinAreaRadius(1);
 	contourFinder.setMaxAreaRadius(15);
 	contourFinder.setFindHoles(true);
@@ -86,6 +96,7 @@ void ofApp::init() {
 	
 	drawImage.allocate(kinect.width * RES_MULT, kinect.height * RES_MULT);
 	
+	
 	// Kalman filter
 	kalmanPosition.init(0.01, 0.1);
 	kalmanEuler.init(0.01, 0.1);
@@ -95,10 +106,43 @@ void ofApp::init() {
 		kalmanMarkers.push_back(kPos);
 	}
 	
+	
 	// stamps
 	stampCoord.resize(1);
 	
 	jsMode = 0;
+	
+	
+	// distortion shader
+#define STRINGIFY(A) #A
+	const char *src = STRINGIFY
+	(
+	 uniform float dist;
+	 uniform vec2 ppoint;
+	 void main(){
+		 
+		 gl_TexCoord[0] = gl_MultiTexCoord0;
+		 
+		 // projection as usual
+		 vec4 pos = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+		 gl_Position = pos;
+		 
+		 // xy with principal point origin
+		 vec2 shiftPos = pos.xy - ppoint;
+		 
+		 // lens distortion
+		 gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
+		 gl_FrontColor = gl_Color;
+	 }
+	 );
+	
+	shader.setupShaderFromSource(GL_VERTEX_SHADER, src);
+	shader.linkProgram();
+	
+	shader.begin();
+	shader.setUniform1f("dist", lensDist);
+	shader.end();
+	
 	
 	ofEnableDepthTest();
 }
@@ -271,13 +315,11 @@ void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
 		cv::Mat oneMat = cv::Mat_<double>::ones(numSamples, 1);
 		cv::Mat pinvMat = measurement.inv(cv::DECOMP_SVD);
 		solution = pinvMat * oneMat;
-		ofLogWarning() << solution.at<double>(0, 0) << " " << solution.at<double>(1, 0) << " " << solution.at<double>(2, 0);
 		for( int i = 0; i < centers.size(); i++ ) {
 			// z = (1 - ax - by) / c
 			float z = (1.0 - solution.at<double>(0, 0) * centers.at(i).x - solution.at<double>(1, 0) * centers.at(i).y) / solution.at<double>(2, 0);
 			ofVec3f v = kinect.sensorToColorCoordinate(ofxCv::toOf(centers.at(i)), z);
 			markers.addVertex(kinect.getWorldCoordinateAt(v.x, v.y, z));
-			ofLogWarning() << markers.getVertex(i);
 		}
 	} else {
 		for( int i = 0; i < centers.size(); i++ ) {
@@ -546,19 +588,24 @@ void ofApp::draw() {
 		ofSetColor(255);
 		if( cameraMode == EASYCAM_MODE )
 			mesh.draw();
+		
 		glPointSize(3);
-		//target.drawWireframe();
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
+		
 		if( cameraMode == PRO_MODE ) {
-			ofPoint euler = kalmanEuler.ofxCv::KalmanPosition_<float>::getEstimation();
-			ofSetColor(255);
+			shader.begin();
+			shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
 		}
+		
 		drawImage.getTextureReference().bind();
 		initMesh.draw();
 		drawImage.getTextureReference().unbind();
 		
-		if(cameraMode == EASYCAM_MODE) {
+		if( cameraMode == EASYCAM_MODE ) {
 			cam.end();
+		}
+		if( cameraMode == PRO_MODE ) {
+			shader.end();
 		}
 		
 	}

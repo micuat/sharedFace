@@ -74,5 +74,7 @@ private:
 	
 	int jsMode;
 	
+	ofShader shader;
+	
 	bool pathLoaded;
 };
