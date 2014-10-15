@@ -480,9 +480,8 @@ void ofApp::updateInitMesh() {
 	}
 	triangulation.triangulate();
 	const ofMesh& tr = triangulation.triangleMesh;
-	initMesh = tr;
-	initMesh.clearIndices();
 	float thDistance = 50.0;
+	// add only when the triangle side lengths are below threshold
 	for( int i = 0; i < tr.getNumIndices(); i+=3 ) {
 		if( tr.getVertex(tr.getIndex(i  )).distance(tr.getVertex(tr.getIndex(i+1))) > thDistance ) continue;
 		if( tr.getVertex(tr.getIndex(i+1)).distance(tr.getVertex(tr.getIndex(i+2))) > thDistance ) continue;
@@ -621,9 +620,9 @@ void ofApp::draw() {
 		shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
 		
-		//drawImage.getTextureReference().bind();
+//		drawImage.getTextureReference().bind();
 		initMesh.draw();
-		//drawImage.getTextureReference().unbind();
+//		drawImage.getTextureReference().unbind();
 		
 		if( cameraMode == EASYCAM_MODE ) {
 			cam.end();
