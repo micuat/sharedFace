@@ -70,6 +70,7 @@ private:
 	ofxCv::KalmanEuler kalmanEuler;
 	vector<ofxCv::KalmanPosition> kalmanMarkers;
 	
+	vector<ofImage> stamps;
 	vector<ofVec2f> stampCoord;
 	
 	int jsMode;

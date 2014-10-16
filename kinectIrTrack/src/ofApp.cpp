@@ -108,7 +108,12 @@ void ofApp::init() {
 	
 	
 	// stamps
-	stampCoord.resize(1);
+	ofImage stamp;
+	stamp.loadImage(ofToDataPath("eye.png"));
+	stamps.push_back(stamp);
+	stamp.mirror(false, true);
+	stamps.push_back(stamp);
+	stampCoord.resize(2);
 	
 	jsMode = 0;
 	
@@ -501,8 +506,8 @@ void ofApp::updateReceiveOsc() {
 		ofxOscMessage m;
 		receiver.getNextMessage(&m);
 		
-		float x = m.getArgAsInt32(0);
-		float y = m.getArgAsInt32(1);
+		float x = (float)m.getArgAsInt32(0);
+		float y = (float)m.getArgAsInt32(1);
 		// check for mouse moved message
 		if(m.getAddress() == "/pen/coord"){
 			if( lines.size() > 0 ) {
@@ -522,10 +527,15 @@ void ofApp::updateReceiveOsc() {
 		}
 		else if(m.getAddress() == "/pen/erase"){
 			lines.clear();
+			
+			for( int i = 0; i < stampCoord.size(); i++ ) {
+				stampCoord.at(i).x = 0;
+				stampCoord.at(i).y = 0;
+			}
 		}
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
-			stampCoord.at(0).x = x;
-			stampCoord.at(0).y = y;
+			stampCoord.at(jsMode - 1).x = x; // TODO
+			stampCoord.at(jsMode - 1).y = y;
 		}
 		else if(m.getAddress() == "/mode/change"){
 			int mode = m.getArgAsInt32(3);
@@ -543,6 +553,8 @@ void ofApp::draw() {
 		
 		// fbo texture rendering
 		drawImage.begin();
+		ofEnableAlphaBlending();
+		
 		ofScale(RES_MULT, RES_MULT); // scale for hyper resolution
 		ofBackground(0);
 		if( jsMode == 2 ) ofBackground(ofColor::gold);
@@ -556,11 +568,16 @@ void ofApp::draw() {
 			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
 		}
 		
+		ofSetColor(255, 255);
 		// stamps
-		for( int i = 0; i < stampCoord.size(); i++ ) {
-			ofCircle(stampCoord.at(i), 30);
+		for( int i = 0; i < stamps.size(); i++ ) {
+			ofImage& stamp = stamps.at(i);
+			stamp.draw(stampCoord.at(i).x - stamp.getWidth()/2, stampCoord.at(i).y - stamp.getHeight()/2);
 		}
+		
 		ofPopStyle();
+		
+		ofDisableAlphaBlending();
 		drawImage.end();
 		
 		if(cameraMode == EASYCAM_MODE) {
