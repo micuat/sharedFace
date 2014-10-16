@@ -98,11 +98,11 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(0.01, 0.1);
-	kalmanEuler.init(0.01, 0.1);
+	kalmanPosition.init(0.001, 1.0);
+	kalmanEuler.init(0.001, 1.0);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(0.001, 0.1);
+		kPos.init(0.001, 1.0);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -534,8 +534,9 @@ void ofApp::updateReceiveOsc() {
 			}
 		}
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
-			stampCoord.at(jsMode - 1).x = x; // TODO
-			stampCoord.at(jsMode - 1).y = y;
+			int curStamp = m.getArgAsInt32(3);
+			stampCoord.at(curStamp).x = x;
+			stampCoord.at(curStamp).y = y;
 		}
 		else if(m.getAddress() == "/mode/change"){
 			int mode = m.getArgAsInt32(3);
