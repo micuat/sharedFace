@@ -73,9 +73,11 @@ private:
 	vector<ofImage> stamps;
 	vector<ofVec2f> stampCoord;
 	
+	bool drawPointCloud;
+	
 	int jsMode;
 	
-	ofShader shader;
+	ofShader shader, shader2;
 	
 	bool pathLoaded;
 };
