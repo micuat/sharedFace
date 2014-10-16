@@ -171,7 +171,7 @@ void ofApp::update() {
 			contourFinder.findContours(blurred);
 		}
 		
-		if( cameraMode == EASYCAM_MODE ) {
+		if( cameraMode == EASYCAM_MODE || jsMode == 7 ) {
 			updatePointCloud(mesh);
 		}
 		
@@ -613,8 +613,9 @@ void ofApp::draw() {
 		}
 		
 		ofSetColor(255);
-		if( cameraMode == EASYCAM_MODE )
+		if( cameraMode == EASYCAM_MODE || jsMode == 7 ) {
 			mesh.draw();
+		}
 		
 		glPointSize(3);
 		glMultMatrixf((GLfloat*)modelMat.getPtr());
