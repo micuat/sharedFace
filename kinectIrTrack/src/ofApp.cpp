@@ -120,6 +120,7 @@ void ofApp::init() {
 	 uniform float dist;
 	 uniform vec2 ppoint;
 	 uniform float elapsedTime;
+	 uniform int jsMode;
 	 void main(){
 		 
 		 gl_TexCoord[0] = gl_MultiTexCoord0;
@@ -135,8 +136,10 @@ void ofApp::init() {
 		 gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
 		 
 		 vec4 col = gl_Color;
-		 col = vec4(0.0, 1.0, 1.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0));
-		 col.a *= col.a;
+		 if( jsMode == 2 ) {
+			 col = vec4(0.0, 1.0, 1.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0));
+			 col.a *= col.a;
+		 }
 		 gl_FrontColor = col;
 	 }
 	 );
@@ -619,10 +622,15 @@ void ofApp::draw() {
 		shader.begin();
 		shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
+		shader.setUniform1i("jsMode", jsMode);
 		
-//		drawImage.getTextureReference().bind();
+		if( jsMode == 0 || jsMode == 1 ) {
+			drawImage.getTextureReference().bind();
+		}
 		initMesh.draw();
-//		drawImage.getTextureReference().unbind();
+		if( jsMode == 0 || jsMode == 1 ) {
+			drawImage.getTextureReference().unbind();
+		}
 		
 		if( cameraMode == EASYCAM_MODE ) {
 			cam.end();
