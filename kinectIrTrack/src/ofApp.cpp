@@ -734,9 +734,11 @@ void ofApp::draw() {
 		
 		ofSetColor(255);
 		if( cameraMode == EASYCAM_MODE || drawPointCloud ) {
+			ofDisableDepthTest();
 			shader2.begin();
 			mesh.draw();
 			shader2.end();
+			ofEnableDepthTest();
 		}
 		
 		glPointSize(3);
