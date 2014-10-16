@@ -98,11 +98,11 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(0.001, 1.0);
-	kalmanEuler.init(0.001, 1.0);
+	kalmanPosition.init(0.00001, 0.01);
+	kalmanEuler.init(0.00001, 0.01);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(0.001, 1.0);
+		kPos.init(0.00001, 0.01);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -394,7 +394,7 @@ void ofApp::findVec3fFromFitting(vector<cv::Point>& centers, ofMesh& markers) {
 		int numSamples = 150;
 		samples.clear();
 		samples.setMode(OF_PRIMITIVE_POINTS);
-		while( count < numSamples || dieCount < numSamples ) {
+		while( count < numSamples && dieCount < numSamples * 4 ) {
 			dieCount++;
 			float p0 = ofRandom(1.0);
 			float p1 = ofRandom(1.0);
