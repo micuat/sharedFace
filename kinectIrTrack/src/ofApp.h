@@ -74,6 +74,7 @@ private:
 	vector<ofVec2f> stampCoord;
 	
 	bool drawPointCloud;
+	int shaderMode;
 	
 	int jsMode;
 	

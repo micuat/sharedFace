@@ -115,8 +115,8 @@ void ofApp::init() {
 	stamps.push_back(stamp);
 	stampCoord.resize(2);
 	
-	jsMode = 0;
-	
+	jsMode = 0; // pen or stamp; really need this?
+	shaderMode = 0; // 0 for turn off, others for shader effects
 	
 	// distortion shader
 #define STRINGIFY(A) #A
@@ -125,7 +125,7 @@ void ofApp::init() {
 	uniform float dist;
 	uniform vec2 ppoint;
 	uniform float elapsedTime;
-	uniform int jsMode;
+	uniform int shaderMode;
 	void main(){
 		
 		gl_TexCoord[0] = gl_MultiTexCoord0;
@@ -141,8 +141,8 @@ void ofApp::init() {
 		gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
 		
 		vec4 col = gl_Color;
-		if( jsMode == 2 ) {
-			col = vec4(0.0, 1.0, 1.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0));
+		if( shaderMode == 1 ) {
+			col = vec4(0.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0), fract(pos.x/2.0+elapsedTime*3.141592*2.0), fract(pos.x/2.0+elapsedTime*3.141592*2.0));
 			col.a *= col.a;
 		}
 		gl_FrontColor = col;
@@ -623,14 +623,26 @@ void ofApp::updateReceiveOsc() {
 		}
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
 			int curStamp = m.getArgAsInt32(3);
-			stampCoord.at(curStamp).x = x;
-			stampCoord.at(curStamp).y = y;
+			if( ofInRange(curStamp, 0, stampCoord.size()-1) ) {
+				stampCoord.at(curStamp).x = x;
+				stampCoord.at(curStamp).y = y;
+			}
 		}
 		else if(m.getAddress() == "/mode/change"){
 			int mode = m.getArgAsInt32(3);
-			if( mode <= 1 )
+			if( mode <= 1 ) {
+				shaderMode = 0;
 				jsMode = mode;
-			if( mode == 7 ) drawPointCloud = !drawPointCloud;
+			}
+			else if( mode == 7 ) drawPointCloud = !drawPointCloud;
+			else if( mode == 2 ) {
+				if( shaderMode == 1 ) {
+					shaderMode = 0;
+				} else {
+					shaderMode = 1;
+				}
+			}
+			
 		}
 	}
 }
@@ -733,13 +745,13 @@ void ofApp::draw() {
 		shader.begin();
 		shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
-		shader.setUniform1i("jsMode", jsMode);
+		shader.setUniform1i("shaderMode", shaderMode);
 		
-		if( jsMode == 0 || jsMode == 1 ) {
+		if( shaderMode == 0 ) {
 			drawImage.getTextureReference().bind();
 		}
 		initMesh.draw();
-		if( jsMode == 0 || jsMode == 1 ) {
+		if( shaderMode == 0 ) {
 			drawImage.getTextureReference().unbind();
 		}
 		
