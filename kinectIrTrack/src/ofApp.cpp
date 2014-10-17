@@ -98,11 +98,11 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(0.00001, 0.01);
-	kalmanEuler.init(0.00001, 0.01);
+	kalmanPosition.init(10.0, 0.01);
+	kalmanEuler.init(10.0, 0.01);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(0.00001, 0.01);
+		kPos.init(10.0, 0.01);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -135,12 +135,36 @@ void ofApp::init() {
 	
 	// distortion shader
 #define STRINGIFY(A) #A
-	const char *src = STRINGIFY
+	const char *src1v = STRINGIFY
    (
 	uniform float dist;
 	uniform vec2 ppoint;
 	uniform float elapsedTime;
+	void main(){
+		
+		gl_TexCoord[0] = gl_MultiTexCoord0;
+		
+		// projection as usual
+		vec4 pos = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+		gl_Position = pos;
+		
+		// xy with principal point origin
+		vec2 shiftPos = pos.xy - ppoint;
+		
+		// lens distortion
+		gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
+		
+		vec4 col = gl_Color;
+		gl_FrontColor = col;
+		gl_TexCoord[0] = gl_MultiTexCoord0;
+	}
+	);
+	
+	const char *src1f = STRINGIFY
+   (
+	uniform float elapsedTime;
 	uniform int shaderMode;
+	uniform sampler2DRect texture1;
 	//generate a random value from four points
 	vec4 rand(vec2 A,vec2 B,vec2 C,vec2 D){ 
 		
@@ -190,37 +214,30 @@ void ofApp::init() {
 		vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
 		return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 	}
-	void main(){
+	void main() {
+		vec2 pos = gl_TexCoord[0].st;
 		
-		gl_TexCoord[0] = gl_MultiTexCoord0;
-		
-		// projection as usual
-		vec4 pos = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
-		gl_Position = pos;
-		
-		// xy with principal point origin
-		vec2 shiftPos = pos.xy - ppoint;
-		
-		// lens distortion
-		gl_Position.xy = shiftPos * (1.0 / (1.0 - dist * length(shiftPos))) + ppoint;
-		
-		vec4 col = gl_Color;
+		vec4 col = texture2DRect(texture1, gl_TexCoord[0].st);
+		vec4 col2 = vec4(0.0, 0.0, 0.0, 0.0);
 		if( shaderMode == 1 ) {
-			col = vec4(0.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0), fract(pos.x/2.0+elapsedTime*3.141592*2.0), fract(pos.x/2.0+elapsedTime*3.141592*2.0));
-			col.a *= col.a;
+			float val = fract(pos.x/20.0+elapsedTime*3.141592) * 0.8;
+			float val2 = fract(pos.x/20.0-elapsedTime*3.141592) * 0.8;
+			if( val > val2 ) {
+				col2 = vec4(0, val, val, val * val);
+			} else {
+				col2 = vec4(val2, 0, 0, val2 * val2);
+			}
 		} else if( shaderMode == 2 ) {
-			col = vec4(fract(pos.x/2.0+elapsedTime*3.141592*2.0), 0.0, 0.0, fract(pos.x/2.0+elapsedTime*3.141592*2.0));
-			col.a *= col.a;
-		} else if( shaderMode == 3 ) {
-			col = vec4(0.0, 1.0, 1.0, 1.0);
-			col.r += 0.10*noise(vec2(pos.x/1000.0 + elapsedTime/100.0, pos.y/10000.0 - elapsedTime/20.0), 200.0);
-			col.r += 0.05*noise(vec2(pos.x/100.0 - elapsedTime/100.0, pos.y/1000.0 - elapsedTime/50.0), 200.0);
-			col.rgb = hsv2rgb(col.rgb);
-		}			
-		gl_FrontColor = col;
+			col2 = vec4(0.0, 1.0, 1.0, 1.0);
+			col2.r += 0.10*noise(vec2(pos.x/1000.0 + elapsedTime/100.0, pos.y/10000.0 + elapsedTime/20.0), 200.0);
+			col2.r += 0.05*noise(vec2(pos.x/100.0 - elapsedTime/100.0, pos.y/1000.0 + elapsedTime/50.0), 200.0);
+			col2.rgb = hsv2rgb(col2.rgb);
+		}
+		col = col * col.a + col2 * col2.a * (1.0 - col.a);
+		col.a = 1.0;
+		gl_FragColor = col;
 	}
 	);
-	
 	const char *src2 = STRINGIFY
    (
 	uniform float elapsedTime;
@@ -298,7 +315,7 @@ void ofApp::init() {
 		gl_Position = pos;
 		
 		vec3 hsb = rgb2hsv(col.xyz);
-		hsb.x += fract(elapsedTime*0.001);
+		hsb.x = fract(elapsedTime*0.1);
 		col.xyz = hsv2rgb(hsb);
 		
 		gl_FrontColor = col;
@@ -306,7 +323,8 @@ void ofApp::init() {
 	}
 	);
 	
-	shader.setupShaderFromSource(GL_VERTEX_SHADER, src);
+	shader.setupShaderFromSource(GL_VERTEX_SHADER, src1v);
+	shader.setupShaderFromSource(GL_FRAGMENT_SHADER, src1f);
 	shader.linkProgram();
 	
 	shader.begin();
@@ -745,11 +763,7 @@ void ofApp::draw() {
 		drawImage.begin();
 		
 		ofScale(RES_MULT, RES_MULT); // scale for hyper resolution
-		if( shaderMode == 0 ) {
-			ofBackground(0, 255);
-		} else {
-			ofBackground(255, 255);
-		}
+		ofBackground(0, 0);
 
 		ofPushStyle();
 		
@@ -829,6 +843,7 @@ void ofApp::draw() {
 		if( cameraMode == EASYCAM_MODE || drawPointCloud ) {
 			ofDisableDepthTest();
 			shader2.begin();
+			shader2.setUniform1f("elapsedTime", ofGetElapsedTimef());
 			mesh.draw();
 			shader2.end();
 			ofEnableDepthTest();
@@ -841,10 +856,8 @@ void ofApp::draw() {
 		shader.setUniform2f("ppoint", proIntrinsic.at<double>(0, 2) / ofGetWidth(), proIntrinsic.at<double>(1, 2) / ofGetHeight());
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
 		shader.setUniform1i("shaderMode", shaderMode);
-		
-		drawImage.getTextureReference().bind();
+		shader.setUniformTexture("texture1", drawImage.getTextureReference(), 0);
 		initMesh.draw();
-		drawImage.getTextureReference().unbind();
 		
 		if( cameraMode == EASYCAM_MODE ) {
 			cam.end();
