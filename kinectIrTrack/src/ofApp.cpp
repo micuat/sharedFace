@@ -109,11 +109,25 @@ void ofApp::init() {
 	
 	// stamps
 	ofImage stamp;
-	stamp.loadImage(ofToDataPath("eye.png"));
+	stamp.loadImage(ofToDataPath("eye1r.png"));
 	stamps.push_back(stamp);
-	stamp.mirror(false, true);
+	stamp.loadImage(ofToDataPath("eye1l.png"));
 	stamps.push_back(stamp);
-	stampCoord.resize(2);
+	stamp.loadImage(ofToDataPath("eye2r.png"));
+	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("eye2l.png"));
+	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("kizu.png"));
+	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("star.png"));
+	stamps.push_back(stamp);
+	
+	stamp.loadImage(ofToDataPath("blinkr.png"));
+	stampsBlink.push_back(stamp);
+	stamp.loadImage(ofToDataPath("blinkl.png"));
+	stampsBlink.push_back(stamp);
+
+	stampCoord.resize(stamps.size());
 	
 	jsMode = 0; // pen or stamp; really need this?
 	shaderMode = 0; // 0 for turn off, others for shader effects

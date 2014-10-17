@@ -71,6 +71,7 @@ private:
 	vector<ofxCv::KalmanPosition> kalmanMarkers;
 	
 	vector<ofImage> stamps;
+	vector<ofImage> stampsBlink;
 	vector<ofVec2f> stampCoord;
 	
 	bool drawPointCloud;
