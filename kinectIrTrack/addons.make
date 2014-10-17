@@ -3,3 +3,4 @@ ofxOpenCv
 ofxCv
 ofxDelaunay
 ofxOsc
+ofxFatLines

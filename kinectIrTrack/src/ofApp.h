@@ -12,6 +12,7 @@
 #include "ofxKinect.h"
 #include "ofxDelaunay.h"
 #include "ofxOsc.h"
+#include "ofxFatLine.h"
 
 #define NUM_MARKERS 4
 #define PORT 57130
@@ -63,7 +64,7 @@ private:
 	
 	bool bReset;
 	ofxOscReceiver receiver;
-	vector<ofVec4f> lines;
+	vector<ofxFatLine> fatLines;
 	ofFbo drawImage;
 	
 	ofxCv::KalmanPosition kalmanPosition;

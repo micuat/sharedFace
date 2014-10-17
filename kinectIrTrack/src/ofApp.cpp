@@ -612,23 +612,30 @@ void ofApp::updateReceiveOsc() {
 		float y = (float)m.getArgAsInt32(1);
 		// check for mouse moved message
 		if(m.getAddress() == "/pen/coord"){
-			if( lines.size() > 0 ) {
-				lines.at(lines.size() - 1).z = x;
-				lines.at(lines.size() - 1).w = y;
-			}
-			lines.push_back(ofVec4f(x, y, -1, -1));
+			float weight = 10.0;
+			if( (fatLines.end()-1)->size() < weight ) weight = (fatLines.end()-1)->size();
+			(fatLines.end()-1)->add(ofVec2f(x, y), ofColor::red, weight/10.0);
+			(fatLines.end()-1)->update();
 		}
 		else if(m.getAddress() == "/pen/pressed"){
-			lines.push_back(ofVec4f(x, y, -1, -1));
+			ofxFatLine fatLine;
+			fatLine.setFeather(3);
+			fatLine.add(ofVec2f(x, y), ofColor::red, 0);
+			fatLine.update();
+			fatLines.push_back(fatLine);
 		}
 		else if(m.getAddress() == "/pen/released"){
-			if( lines.size() > 0 ) {
-				lines.at(lines.size() - 1).z = x;
-				lines.at(lines.size() - 1).w = y;
+			(fatLines.end()-1)->add(ofVec2f(x, y), ofColor::red, 0);
+			float weight = 10.0;
+			if( (fatLines.end()-1)->size() > weight ) {
+				for( int i = 0; i < weight; i++ ) {
+					(fatLines.end()-1)->updateWeight((fatLines.end()-1)->size() - i, i/10.0);
+				}
 			}
+			(fatLines.end()-1)->update();
 		}
 		else if(m.getAddress() == "/pen/erase"){
-			lines.clear();
+			fatLines.clear();
 			
 			for( int i = 0; i < stampCoord.size(); i++ ) {
 				stampCoord.at(i).x = 0;
@@ -670,26 +677,27 @@ void ofApp::draw() {
 		
 		// fbo texture rendering
 		drawImage.begin();
-		ofEnableAlphaBlending();
 		
 		ofScale(RES_MULT, RES_MULT); // scale for hyper resolution
-		ofBackground(0);
-		if( jsMode == 2 ) ofBackground(ofColor::gold);
+		ofBackground(0, 255);
 		ofPushStyle();
-		ofSetColor(250);
-		
-		// lines
-		ofSetLineWidth(2 * RES_MULT);
-		for( int i = 0; i < lines.size(); i++ ) {
-			if( lines.at(i).z < 0 && lines.at(i).w < 0 ) continue;
-			ofLine(lines.at(i).x, lines.at(i).y, lines.at(i).z, lines.at(i).w);
-		}
 		
 		ofSetColor(255, 255);
+		ofEnableAlphaBlending();
+		ofDisableDepthTest();
+		
 		// stamps
 		for( int i = 0; i < stamps.size(); i++ ) {
 			ofImage& stamp = stamps.at(i);
 			stamp.draw(stampCoord.at(i).x - stamp.getWidth()/2, stampCoord.at(i).y - stamp.getHeight()/2);
+		}
+		
+		ofEnableDepthTest();
+		
+		// lines
+		ofSetLineWidth(2 * RES_MULT);
+		for( int i = 0; i < fatLines.size(); i++ ) {
+			fatLines.at(i).draw();
 		}
 		
 		ofPopStyle();
@@ -801,18 +809,12 @@ void ofApp::keyPressed(int key) {
 }
 
 void ofApp::mousePressed(int x, int y, int button) {
-	lines.push_back(ofVec4f(x, y, -1, -1));
 }
 
 void ofApp::mouseDragged(int x, int y, int button) {
-	lines.at(lines.size() - 1).z = x;
-	lines.at(lines.size() - 1).w = y;
-	lines.push_back(ofVec4f(x, y, -1, -1));
 }
 
 void ofApp::mouseReleased(int x, int y, int button) {
-	lines.at(lines.size() - 1).z = x;
-	lines.at(lines.size() - 1).w = y;
 }
 
 void ofApp::dragEvent(ofDragInfo dragInfo){
