@@ -109,22 +109,31 @@ void ofApp::init() {
 	
 	// stamps
 	ofImage stamp;
+	float a = 0.6;
 	stamp.loadImage(ofToDataPath("eye1r.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye1l.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye2r.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye2l.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("kizu.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("star.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	
 	stamp.loadImage(ofToDataPath("blinkr.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stampsBlink.push_back(stamp);
 	stamp.loadImage(ofToDataPath("blinkl.png"));
+	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stampsBlink.push_back(stamp);
 
 	stampCoord.resize(stamps.size());
