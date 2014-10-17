@@ -436,7 +436,7 @@ void ofApp::updatePointCloud(ofMesh& m) {
 	for(int y = 0; y < h; y += step) {
 		for(int x = 0; x < w; x += step) {
 			float distance = kinect.getDistanceAt(x, y);
-			if( distance > 0 && distance < 2000 ) {
+			if( distance > 0 && distance < 1500 ) {
 				ofPoint coord = kinect.sensorToColorCoordinate(ofPoint(x, y));
 				ofPoint p = kinect.getWorldCoordinateAt(coord.x, coord.y, distance);
 				m.addVertex(p);
@@ -772,9 +772,13 @@ void ofApp::draw() {
 		ofDisableDepthTest();
 		
 		// stamps
+		float curNoise = ofNoise(ofGetElapsedTimef());
 		for( int i = 0; i < stamps.size(); i++ ) {
-			ofImage& stamp = stamps.at(i);
-			stamp.draw(stampCoord.at(i).x - stamp.getWidth()/2, stampCoord.at(i).y - stamp.getHeight()/2);
+			ofImage* stamp;
+			if( i <= 1 && curNoise > 0.6 ) stamp = &stampsBlink.at(i);
+			else if( i <= 3 && curNoise > 0.6 ) stamp = &stampsBlink.at(i-2);
+			else stamp = &stamps.at(i);
+			stamp->draw(stampCoord.at(i).x - stamp->getWidth()/2, stampCoord.at(i).y - stamp->getHeight()/2);
 		}
 		
 		ofEnableDepthTest();
