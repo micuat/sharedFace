@@ -608,24 +608,31 @@ void ofApp::updateReceiveOsc() {
 		ofxOscMessage m;
 		receiver.getNextMessage(&m);
 		
-		float x = (float)m.getArgAsInt32(0);
-		float y = (float)m.getArgAsInt32(1);
+		float x = m.getArgAsFloat(0);
+		float y = m.getArgAsFloat(1);
 		// check for mouse moved message
 		if(m.getAddress() == "/pen/coord"){
+			ofColor c;
+			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
+			ofLogWarning()<<m.getArgAsFloat(2);
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() < weight ) weight = (fatLines.end()-1)->size();
-			(fatLines.end()-1)->add(ofVec2f(x, y), ofColor::red, weight/10.0);
+			(fatLines.end()-1)->add(ofVec2f(x, y), c, weight/10.0);
 			(fatLines.end()-1)->update();
 		}
 		else if(m.getAddress() == "/pen/pressed"){
+			ofColor c;
+			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
 			ofxFatLine fatLine;
 			fatLine.setFeather(3);
-			fatLine.add(ofVec2f(x, y), ofColor::red, 0);
+			fatLine.add(ofVec2f(x, y), c, 0);
 			fatLine.update();
 			fatLines.push_back(fatLine);
 		}
 		else if(m.getAddress() == "/pen/released"){
-			(fatLines.end()-1)->add(ofVec2f(x, y), ofColor::red, 0);
+			ofColor c;
+			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
+			(fatLines.end()-1)->add(ofVec2f(x, y), c, 0);
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() > weight ) {
 				for( int i = 0; i < weight; i++ ) {
