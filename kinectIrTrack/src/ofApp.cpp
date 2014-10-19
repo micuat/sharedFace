@@ -725,6 +725,9 @@ void ofApp::updateReceiveOsc() {
 				stampCoord.at(i).y = 0;
 			}
 		}
+		else if(m.getAddress() == "/pen/undo"){
+			fatLines.pop_back();
+		}
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
 			int curStamp = m.getArgAsInt32(3);
 			if( ofInRange(curStamp, 0, stampCoord.size()-1) ) {
