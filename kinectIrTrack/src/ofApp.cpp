@@ -109,31 +109,22 @@ void ofApp::init() {
 	
 	// stamps
 	ofImage stamp;
-	float a = 0.6;
 	stamp.loadImage(ofToDataPath("eye1r.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye1l.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye2r.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("eye2l.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("kizu.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("star.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stamps.push_back(stamp);
 	
 	stamp.loadImage(ofToDataPath("blinkr.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stampsBlink.push_back(stamp);
 	stamp.loadImage(ofToDataPath("blinkl.png"));
-	stamp.resize(stamp.getWidth() * a, stamp.getHeight() * a);
 	stampsBlink.push_back(stamp);
 
 	stampCoord.resize(stamps.size());
@@ -772,7 +763,7 @@ void ofApp::draw() {
 		drawImage.begin();
 		
 		ofScale(RES_MULT, RES_MULT); // scale for hyper resolution
-		ofBackground(0, 0);
+		ofBackground(255, 255);
 
 		ofPushStyle();
 		
@@ -787,7 +778,12 @@ void ofApp::draw() {
 			if( i <= 1 && curNoise > 0.6 ) stamp = &stampsBlink.at(i);
 			else if( i <= 3 && curNoise > 0.6 ) stamp = &stampsBlink.at(i-2);
 			else stamp = &stamps.at(i);
-			stamp->draw(stampCoord.at(i).x - stamp->getWidth()/2, stampCoord.at(i).y - stamp->getHeight()/2);
+			ofPushMatrix();
+			ofTranslate(stampCoord.at(i));
+			float a = 0.6 * 0.33;
+			ofScale(a, a, 1);
+			stamp->draw(-stamp->getWidth()/2, -stamp->getHeight()/2);
+			ofPopMatrix();
 		}
 		
 		ofEnableDepthTest();
