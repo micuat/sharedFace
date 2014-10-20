@@ -100,11 +100,11 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(10.0, 10.0);
-	kalmanEuler.init(10.0, 10.0);
+	kalmanPosition.init(10.0, 20.0);
+	kalmanEuler.init(10.0, 20.0);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(10.0, 10.0);
+		kPos.init(10.0, 20.0);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -235,8 +235,9 @@ void ofApp::init() {
 			col2.r += 0.05*noise(vec2(pos.x/100.0 - elapsedTime/100.0, pos.y/1000.0 + elapsedTime/50.0), 200.0);
 			col2.rgb = hsv2rgb(col2.rgb);
 		}
-		col = col * col.a + col2 * col2.a * (1.0 - col.a);
-		col.a = 1.0;
+		if( col.r == 1.0 && col.g == 1.0 && col.b == 1.0 && shaderMode > 0 ) {
+			col = col2;
+		}
 		gl_FragColor = col;
 	}
 	);
