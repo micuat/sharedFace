@@ -825,7 +825,7 @@ void ofApp::draw() {
 					float hue = j/32.0;
 					if( dynamicPen ) hue += 2.0 * ofGetElapsedTimef();
 					c.setHsb(hue - (int)hue, 1.0, 1.0);
-					flColor.setColor(j, c);
+					flColor.updateColor(j, c);
 				}
 				flColor.update();
 				flColor.draw();
@@ -836,7 +836,7 @@ void ofApp::draw() {
 					float br = 0.99;
 					if( dynamicPen ) br = j/32.0 + 2.0 * ofGetElapsedTimef();
 					c.setBrightness(br - (int)br);
-					flColor.setColor(j, c);
+					flColor.updateColor(j, c);
 				}
 				flColor.update();
 				flColor.draw();
