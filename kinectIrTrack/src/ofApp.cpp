@@ -670,11 +670,13 @@ void ofApp::updateInitMesh(ofMesh& ms, ofMesh& markersProjected) {
 			}
 		}
 	}
-//	for( int i = 0; i < target.getNumVertices(); i++ ) {
-//		initMesh.addVertex(target.getVertex(i));
-//		initMesh.addTexCoord(markersProjected.getVertex(i));
-//		triangulation.addPoint(target.getVertex(i));
-//	}
+	if( initMesh.getNumVertices() > 0 ) {
+		for( int i = 0; i < target.getNumVertices(); i++ ) {
+			initMesh.addVertex(target.getVertex(i));
+			initMesh.addTexCoord(markersProjected.getVertex(i));
+			triangulation.addPoint(target.getVertex(i));
+		}
+	}
 	triangulation.triangulate();
 	const ofMesh& tr = triangulation.triangleMesh;
 	float thDistance = 50.0;
