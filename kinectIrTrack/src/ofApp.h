@@ -56,6 +56,7 @@ private:
 	
 	ofxKinect kinect;
 	ofxCv::ContourFinder contourFinder;
+	cv::Rect roi;
 	ofMesh target, initTarget, markers, samples;
 	ofMesh initMesh;
 	ofImage image;

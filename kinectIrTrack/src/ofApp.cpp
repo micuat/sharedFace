@@ -84,7 +84,7 @@ void ofApp::init() {
 	
 	
 	// tracker setup
-	contourFinder.setMinAreaRadius(1);
+	contourFinder.setMinAreaRadius(3);
 	contourFinder.setMaxAreaRadius(15);
 	contourFinder.setFindHoles(true);
 	contourFinder.setTargetColor(0);
@@ -94,15 +94,17 @@ void ofApp::init() {
 	// an object can move up to 32 pixels per frame
 	contourFinder.getTracker().setMaximumDistance(32);
 	
+	roi = cv::Rect(160, 0, 320, 480);
+	
 	drawImage.allocate(kinect.width * RES_MULT, kinect.height * RES_MULT);
 	
 	
 	// Kalman filter
-	kalmanPosition.init(10.0, 0.01);
-	kalmanEuler.init(10.0, 0.01);
+	kalmanPosition.init(10.0, 10.0);
+	kalmanEuler.init(10.0, 10.0);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(10.0, 0.01);
+		kPos.init(10.0, 10.0);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -351,7 +353,8 @@ void ofApp::update() {
 		} else {
 			ofImage blurred;
 			ofxCv::blur(kinect.getPixelsRef(), blurred, 3);
-			contourFinder.findContours(blurred);
+			cv::Mat img = ofxCv::toCv(blurred);
+			contourFinder.findContours(img(roi));
 		}
 		
 		if( cameraMode == EASYCAM_MODE || drawPointCloud ) {
@@ -366,6 +369,8 @@ void ofApp::update() {
 		if( contourFinder.size() == 4 ) {
 			for(int i = 0; i < contourFinder.size(); i++) {
 				sensorCoords.push_back(contourFinder.getCenter(i));
+				sensorCoords.at(i).x += roi.x;
+				sensorCoords.at(i).y += roi.y;
 			}
 			findVec3fFromFitting(sensorCoords, markers);
 			for(int i = 0; i < contourFinder.size(); i++) {
@@ -726,7 +731,7 @@ void ofApp::updateReceiveOsc() {
 			}
 		}
 		else if(m.getAddress() == "/pen/undo"){
-			fatLines.pop_back();
+			if( fatLines.size() > 0 ) fatLines.pop_back();
 		}
 		else if(m.getAddress() == "/stamp/coord" || m.getAddress() == "/stamp/pressed"){
 			int curStamp = m.getArgAsInt32(3);
