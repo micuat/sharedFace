@@ -77,6 +77,7 @@ private:
 	vector<ofVec2f> stampCoord;
 	
 	bool drawPointCloud;
+	bool dynamicPen;
 	int shaderMode;
 	
 	int jsMode;

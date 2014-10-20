@@ -134,6 +134,7 @@ void ofApp::init() {
 	jsMode = 0; // pen or stamp; really need this?
 	shaderMode = 0; // 0 for turn off, others for shader effects
 	drawPointCloud = false;
+	dynamicPen = false;
 	
 	// distortion shader
 #define STRINGIFY(A) #A
@@ -753,6 +754,7 @@ void ofApp::updateReceiveOsc() {
 				//shaderMode = 0;
 				jsMode = mode;
 			}
+			else if( mode == 6 ) dynamicPen = !dynamicPen;
 			else if( mode == 7 ) drawPointCloud = !drawPointCloud;
 			else {
 				int shaderModeToBe = mode - 1;
@@ -806,7 +808,30 @@ void ofApp::draw() {
 		// lines
 		ofSetLineWidth(2 * RES_MULT);
 		for( int i = fatLines.size() - 1; i >= 0; i-- ) {
-			fatLines.at(i).draw();
+			ofxFatLine& fl = fatLines.at(i);
+			if( fl.getColor(0) == ofColor::black ) {
+				ofxFatLine flColor = fl;
+				for( int j = 0; j < flColor.size(); j++ ) {
+					ofFloatColor c;
+					float hue = j/32.0;
+					if( dynamicPen ) hue += 2.0 * ofGetElapsedTimef();
+					c.setHsb(hue - (int)hue, 1.0, 1.0);
+					flColor.setColor(j, c);
+				}
+				flColor.update();
+				flColor.draw();
+			} else {
+				ofxFatLine flColor = fl;
+				for( int j = 0; j < flColor.size(); j++ ) {
+					ofFloatColor c = fl.getColor(j);
+					float br = 0.99;
+					if( dynamicPen ) br = j/32.0 + 2.0 * ofGetElapsedTimef();
+					c.setBrightness(br - (int)br);
+					flColor.setColor(j, c);
+				}
+				flColor.update();
+				flColor.draw();
+			}
 		}
 		
 		ofPopStyle();
