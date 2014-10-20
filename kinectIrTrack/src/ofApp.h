@@ -32,7 +32,7 @@ public:
 	void updateMarkerKalmanFilter();
 	ofMatrix4x4 findRigidTransformation(ofMesh&, ofMesh&);
 	void updateModelKalmanFilter();
-	void updateInitMesh();
+	void updateInitMesh(ofMesh&, ofMesh&);
 	void updateReceiveOsc();
 	void keyPressed(int);
 	void mousePressed(int x, int y, int button);

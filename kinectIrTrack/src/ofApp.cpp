@@ -422,7 +422,7 @@ void ofApp::update() {
 			updateModelKalmanFilter();
 			
 			if( initMesh.getNumVertices() == 0 ) {
-				updateInitMesh();
+				updateInitMesh(markers, markersProjected);
 			}
 			
 			updateReceiveOsc();
@@ -652,7 +652,7 @@ ofMatrix4x4 ofApp::findRigidTransformation(ofMesh& target, ofMesh& initTarget) {
 void ofApp::updateModelKalmanFilter() {
 }
 
-void ofApp::updateInitMesh() {
+void ofApp::updateInitMesh(ofMesh& ms, ofMesh& markersProjected) {
 	double distanceProj = getLongestDistance(target);
 	
 	ofxDelaunay triangulation;
@@ -669,6 +669,11 @@ void ofApp::updateInitMesh() {
 			}
 		}
 	}
+//	for( int i = 0; i < target.getNumVertices(); i++ ) {
+//		initMesh.addVertex(target.getVertex(i));
+//		initMesh.addTexCoord(markersProjected.getVertex(i));
+//		triangulation.addPoint(target.getVertex(i));
+//	}
 	triangulation.triangulate();
 	const ofMesh& tr = triangulation.triangleMesh;
 	float thDistance = 50.0;
