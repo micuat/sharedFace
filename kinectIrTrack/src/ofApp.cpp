@@ -100,11 +100,11 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(10.0, 20.0);
-	kalmanEuler.init(10.0, 20.0);
+	kalmanPosition.init(20.0, 30.0);
+	kalmanEuler.init(20.0, 30.0);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(10.0, 20.0);
+		kPos.init(20.0, 30.0);
 		kalmanMarkers.push_back(kPos);
 	}
 	
@@ -699,17 +699,16 @@ void ofApp::updateReceiveOsc() {
 		float y = m.getArgAsFloat(1);
 		// check for mouse moved message
 		if(m.getAddress() == "/pen/coord"){
-			ofColor c;
-			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
-			ofLogWarning()<<m.getArgAsFloat(2);
+			float i = m.getArgAsFloat(2);
+			ofColor c(i==0?255:0, i==1?255:0, i==2?255:0);
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() < weight ) weight = (fatLines.end()-1)->size();
 			(fatLines.end()-1)->add(ofVec2f(x, y), c, weight/10.0);
 			(fatLines.end()-1)->update();
 		}
 		else if(m.getAddress() == "/pen/pressed"){
-			ofColor c;
-			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
+			float i = m.getArgAsFloat(2);
+			ofColor c(i==0?255:0, i==1?255:0, i==2?255:0);
 			ofxFatLine fatLine;
 			fatLine.setFeather(3);
 			fatLine.add(ofVec2f(x, y), c, 0);
@@ -717,8 +716,8 @@ void ofApp::updateReceiveOsc() {
 			fatLines.push_back(fatLine);
 		}
 		else if(m.getAddress() == "/pen/released"){
-			ofColor c;
-			c.setHsb(ofMap(m.getArgAsFloat(2), 0, 8, 0, 256), 255, 255);
+			float i = m.getArgAsFloat(2);
+			ofColor c(i==0?255:0, i==1?255:0, i==2?255:0);
 			(fatLines.end()-1)->add(ofVec2f(x, y), c, 0);
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() > weight ) {
