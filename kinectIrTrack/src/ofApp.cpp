@@ -235,6 +235,19 @@ void ofApp::init() {
 			col2.r += 0.10*noise(vec2(pos.x/1000.0 + elapsedTime/100.0, pos.y/10000.0 + elapsedTime/20.0), 200.0);
 			col2.r += 0.05*noise(vec2(pos.x/100.0 - elapsedTime/100.0, pos.y/1000.0 + elapsedTime/50.0), 200.0);
 			col2.rgb = hsv2rgb(col2.rgb);
+		} else if( shaderMode == 3 ) {
+			float val = fract(pos.y/20.0+elapsedTime*3.141592) * 0.8;
+			float val2 = fract(pos.y/20.0-elapsedTime*3.141592) * 0.8;
+			if( val > val2 ) {
+				col2 = vec4(val, 0, val, val * val);
+			} else {
+				col2 = vec4(0, val2, 0, val2 * val2);
+			}
+		} else if( shaderMode == 4 ) {
+			col2 = vec4(1.0, 0.0, 1.0, 1.0);
+			col2.g += 0.10*noise(vec2(pos.x/1000.0 + elapsedTime/100.0, pos.y/10000.0 + elapsedTime/20.0), 200.0);
+			col2.g += 0.05*noise(vec2(pos.x/100.0 - elapsedTime/100.0, pos.y/1000.0 + elapsedTime/50.0), 200.0);
+			col2.rgb = hsv2rgb(col2.rgb);
 		}
 		if( col.r == 1.0 && col.g == 1.0 && col.b == 1.0 && shaderMode > 0 ) {
 			col = col2;
@@ -672,11 +685,11 @@ void ofApp::updateInitMesh(ofMesh& ms, ofMesh& markersProjected) {
 		}
 	}
 	if( initMesh.getNumVertices() > 0 ) {
-		for( int i = 0; i < target.getNumVertices(); i++ ) {
-			initMesh.addVertex(target.getVertex(i));
-			initMesh.addTexCoord(markersProjected.getVertex(i));
-			triangulation.addPoint(target.getVertex(i));
-		}
+//		for( int i = 0; i < target.getNumVertices(); i++ ) {
+//			initMesh.addVertex(target.getVertex(i));
+//			initMesh.addTexCoord(markersProjected.getVertex(i));
+//			triangulation.addPoint(target.getVertex(i));
+//		}
 	}
 	triangulation.triangulate();
 	const ofMesh& tr = triangulation.triangleMesh;
@@ -757,12 +770,8 @@ void ofApp::updateReceiveOsc() {
 			else if( mode == 6 ) dynamicPen = !dynamicPen;
 			else if( mode == 7 ) drawPointCloud = !drawPointCloud;
 			else {
-				int shaderModeToBe = mode - 1;
-				if( shaderMode == shaderModeToBe ) { // toggle
-					shaderMode = 0;
-				} else {
-					shaderMode = shaderModeToBe; // new one
-				}
+				int shaderModeToBe = mode - 2;
+				shaderMode = shaderModeToBe; // new one
 			}
 			
 		}
