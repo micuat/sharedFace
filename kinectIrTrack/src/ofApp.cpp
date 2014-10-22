@@ -123,6 +123,12 @@ void ofApp::init() {
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("star.png"));
 	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("ball1.png"));
+	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("ball2.png"));
+	stamps.push_back(stamp);
+	stamp.loadImage(ofToDataPath("ball3.png"));
+	stamps.push_back(stamp);
 	
 	stamp.loadImage(ofToDataPath("blinkr.png"));
 	stampsBlink.push_back(stamp);
