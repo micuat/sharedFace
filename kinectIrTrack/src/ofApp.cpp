@@ -30,7 +30,11 @@ void ofApp::setup() {
 		init();
 		pathLoaded = true;
 	} else {
-		pathLoaded = false;
+		rootDir.push_back("/Users/naoto/Documents/openFrameworks-0.8.3/addons/ofxActiveScan/141021miraikan/");
+		init();
+		pathLoaded = true;
+		
+//		pathLoaded = false;
 	}
 }
 
@@ -867,6 +871,7 @@ void ofApp::draw() {
 		} else if(cameraMode == PRO_MODE) {
 			ofSetupScreenPerspective(proSize.width, proSize.height);
 			proCalibration.loadProjectionMatrix(0.0001, 100000000.0);
+			ofViewport(moveKey.x, moveKey.y);
 			cv::Mat m = proExtrinsic;
 			cv::Mat extrinsics = (cv::Mat1d(4,4) <<
 								  m.at<double>(0,0), m.at<double>(0,1), m.at<double>(0,2), m.at<double>(0,3),
@@ -950,6 +955,18 @@ void ofApp::keyPressed(int key) {
 	if( key == ' ' ) {
 		bReset = true;
 		image.setFromPixels(kinect.getPixelsRef());
+	}
+	if( key == OF_KEY_UP ) {
+		moveKey.y-=1;
+	}
+	if( key == OF_KEY_DOWN ) {
+		moveKey.y+=1;
+	}
+	if( key == OF_KEY_LEFT ) {
+		moveKey.x-=1;
+	}
+	if( key == OF_KEY_RIGHT ) {
+		moveKey.x+=1;
 	}
 }
 

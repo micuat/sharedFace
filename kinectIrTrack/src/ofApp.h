@@ -84,5 +84,7 @@ private:
 	
 	ofShader shader, shader2;
 	
+	ofVec2f moveKey;
+	
 	bool pathLoaded;
 };
