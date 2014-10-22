@@ -367,7 +367,8 @@ void ofApp::update() {
 			contourFinder.findContours(eroded);
 		} else {
 			ofImage blurred;
-			ofxCv::blur(kinect.getPixelsRef(), blurred, 3);
+			ofxCv::erode(kinect.getPixelsRef(), blurred, 2);
+			ofxCv::blur(blurred, 3);
 			cv::Mat img = ofxCv::toCv(blurred);
 			contourFinder.findContours(img(roi));
 		}
