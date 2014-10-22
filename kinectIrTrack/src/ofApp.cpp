@@ -104,14 +104,13 @@ void ofApp::init() {
 	
 	
 	// Kalman filter
-	kalmanPosition.init(20.0, 30.0);
-	kalmanEuler.init(20.0, 30.0);
+	kalmanPosition.init(30000.0, 30000.0);
+	kalmanEuler.init(30000.0, 30000.0);
 	for( int i = 0; i < NUM_MARKERS; i++ ) {
 		ofxCv::KalmanPosition kPos;
-		kPos.init(20.0, 30.0);
+		kPos.init(30000.0, 30000.0);
 		kalmanMarkers.push_back(kPos);
 	}
-	
 	
 	// stamps
 	ofImage stamp;
@@ -834,7 +833,7 @@ void ofApp::draw() {
 				for( int j = 0; j < flColor.size(); j++ ) {
 					ofFloatColor c;
 					float hue = j/32.0;
-					if( dynamicPen ) hue += 2.0 * ofGetElapsedTimef();
+					if( true ) hue += 2.0 * ofGetElapsedTimef();
 					c.setHsb(hue - (int)hue, 1.0, 1.0);
 					flColor.updateColor(j, c);
 				}
@@ -968,6 +967,8 @@ void ofApp::keyPressed(int key) {
 	if( key == OF_KEY_RIGHT ) {
 		moveKey.x+=1;
 	}
+	ofLogWarning() << moveKey;
+
 }
 
 void ofApp::mousePressed(int x, int y, int button) {
