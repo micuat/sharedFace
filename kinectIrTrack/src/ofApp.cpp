@@ -128,9 +128,11 @@ void ofApp::init() {
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("ball1.png"));
 	stamps.push_back(stamp);
+	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("ball2.png"));
 	stamps.push_back(stamp);
 	stamp.loadImage(ofToDataPath("ball3.png"));
+	stamps.push_back(stamp);
 	stamps.push_back(stamp);
 	
 	stamp.loadImage(ofToDataPath("blinkr.png"));
@@ -376,8 +378,9 @@ void ofApp::update() {
 			contourFinder.findContours(eroded);
 		} else {
 			ofImage blurred;
-			ofxCv::erode(kinect.getPixelsRef(), blurred, 2);
+			ofxCv::erode(kinect.getPixelsRef(), blurred, 1);
 			ofxCv::blur(blurred, 3);
+//			ofxCv::blur(kinect.getPixelsRef(), blurred, 3);
 			cv::Mat img = ofxCv::toCv(blurred);
 			contourFinder.findContours(img(roi));
 		}
@@ -424,12 +427,12 @@ void ofApp::update() {
 				}
 			}
 			if( registeredLabels.empty() || bNeedReregister || bReset ) { // need to register
-				kalmanPosition.init(0.1, 0.1, true);
-				kalmanEuler.init(0.1, 0.1, true);
+				kalmanPosition.init(10000, 10000, true);
+				kalmanEuler.init(10000, 10000, true);
 				kalmanMarkers.clear();
 				for( int i = 0; i < NUM_MARKERS; i++ ) {
 					ofxCv::KalmanPosition kPos;
-					kPos.init(0.01, 0.1);
+					kPos.init(10000, 10000);
 					kalmanMarkers.push_back(kPos);
 				}
 				registeredLabels = registerMarkers(markers, markersProjected, markerLabels, target);
@@ -686,7 +689,7 @@ void ofApp::updateInitMesh(ofMesh& ms, ofMesh& markersProjected) {
 	initMesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	for( int i = 0; i < mesh.getNumVertices(); i++ ) {
 		for( int j = 0; j < target.getNumVertices(); j++ ) {
-			if( mesh.getVertex(i).distance(target.getVertex(j)) < distanceProj ) {
+			if( mesh.getVertex(i).distance(target.getVertex(j)) < distanceProj * 1.5 ) {
 				initMesh.addVertex(mesh.getVertex(i));
 				initMesh.addTexCoord(mesh.getTexCoord(i));
 				triangulation.addPoint(mesh.getVertex(i));
@@ -703,7 +706,7 @@ void ofApp::updateInitMesh(ofMesh& ms, ofMesh& markersProjected) {
 	}
 	triangulation.triangulate();
 	const ofMesh& tr = triangulation.triangleMesh;
-	float thDistance = 50.0;
+	float thDistance = 100.0;
 	// add only when the triangle side lengths are below threshold
 	for( int i = 0; i < tr.getNumIndices(); i+=3 ) {
 		if( tr.getVertex(tr.getIndex(i  )).distance(tr.getVertex(tr.getIndex(i+1))) > thDistance ) continue;
@@ -729,14 +732,14 @@ void ofApp::updateReceiveOsc() {
 			ofColor c(i==0?255:0, i==1?255:0, i==2?255:0);
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() < weight ) weight = (fatLines.end()-1)->size();
-			(fatLines.end()-1)->add(ofVec2f(x, y), c, weight/10.0);
+			(fatLines.end()-1)->add(ofVec2f(x, y), c, weight/7.5);
 			(fatLines.end()-1)->update();
 		}
 		else if(m.getAddress() == "/pen/pressed"){
 			float i = m.getArgAsFloat(2);
 			ofColor c(i==0?255:0, i==1?255:0, i==2?255:0);
 			ofxFatLine fatLine;
-			fatLine.setFeather(3);
+			fatLine.setFeather(0);
 			fatLine.add(ofVec2f(x, y), c, 0);
 			fatLine.update();
 			fatLines.push_back(fatLine);
@@ -748,7 +751,7 @@ void ofApp::updateReceiveOsc() {
 			float weight = 10.0;
 			if( (fatLines.end()-1)->size() > weight ) {
 				for( int i = 0; i < weight; i++ ) {
-					(fatLines.end()-1)->updateWeight((fatLines.end()-1)->size() - i, i/10.0);
+					(fatLines.end()-1)->updateWeight((fatLines.end()-1)->size() - i, i/7.5);
 				}
 			}
 			(fatLines.end()-1)->update();
